@@ -1,9 +1,10 @@
-import 'package:eldoriaCare/model/staff_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/screens/profile/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
+import 'package:eldoriaCare/widget/care_desk_buttons.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -11,163 +12,158 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.put(ProfileController());
+    final clientData = ClientDataController.to;
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: 4.8.w, vertical: 2.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Header Title ──────────────────────────────────────
-            Text(
-              'Profile',
-              style: TextStyle(
-                color: ThemeColors.textWhite,
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            2.h.vs,
-
-            // ── Profile Card ──────────────────────────────────────
-            Obx(() => _buildProfileCard(c.currentStaff.value)),
-            2.5.h.vs,
-
-            // ── Sign Out Button ───────────────────────────────────
-            _buildSignOutButton(c),
-          ],
+    return Scaffold(
+      backgroundColor: ThemeColors.appBackground,
+      appBar: AppBar(
+        backgroundColor: ThemeColors.appBar,
+        elevation: 0,
+        title: Text(
+          'Profile',
+          style: TextStyle(
+            color: ThemeColors.textWhite,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildProfileCard(StaffModel? user) {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: ThemeColors.cardSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ThemeColors.cardBorder),
-      ),
-      child: Column(
+      body: ListView(
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 7.w,
-                backgroundColor: ThemeColors.skinTone,
-                child: Text(
-                  user?.initials ?? 'AP',
-                  style: TextStyle(
-                    color: ThemeColors.chipSelectedBg,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 17.sp,
-                  ),
+          // ── User Information Card ─────────────────────────────────────
+          Obx(() => Container(
+                padding: EdgeInsets.all(4.5.w),
+                decoration: BoxDecoration(
+                  color: ThemeColors.cardSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: ThemeColors.cardBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ThemeColors.shadowColorDark,
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ),
-              3.5.w.hs,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      user?.name ?? 'Unknown',
-                      style: TextStyle(
-                        color: ThemeColors.textWhite,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18.sp,
+                    // Avatar Circle with Initials
+                    Container(
+                      width: 14.w,
+                      height: 14.w,
+                      decoration: BoxDecoration(
+                        color: ThemeColors.goldenAmberBg,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: ThemeColors.goldenAmber, width: 1.5),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        c.initials,
+                        style: TextStyle(
+                          color: ThemeColors.goldenAmber,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
-                    0.3.h.vs,
-                    Text(
-                      user?.role ?? 'User Role',
-                      style: TextStyle(
-                        color: ThemeColors.textMuted,
-                        fontSize: 13.5.sp,
-                        fontWeight: FontWeight.w500,
+
+                    4.w.hs,
+
+                    // Name & Phone
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            clientData.clientName.value,
+                            style: TextStyle(
+                              color: ThemeColors.textWhite,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          0.4.h.vs,
+                          Text(
+                            '+91 ${clientData.clientPhone.value}',
+                            style: TextStyle(
+                              color: ThemeColors.textMuted,
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          2.h.vs,
+              )),
 
-          // Key-Value Rows
-          _buildProfileRow('Phone', user?.phone ?? '+91 1234567890'),
-          _buildProfileRow('City', user?.cityName ?? 'Mumbai'),
-          _buildProfileRow('Area', user?.area ?? 'Andheri, Versova'),
-          _buildProfileRow(
-            'Skills',
-            user != null && user.skills.isNotEmpty
-                ? user.skills.join(', ')
-                : 'Diabetic care, injections',
-          ),
-          _buildProfileRow(
-            'Documents',
-            user != null
-                ? (user.isVerified ? 'Verified' : 'Pending verification')
-                : 'Verified',
-          ),
-        ],
-      ),
-    );
-  }
+          2.2.h.vs,
 
-  Widget _buildProfileRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 1.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          // ── Care Desk Card ────────────────────────────────────────────
+          Container(
+            padding: EdgeInsets.all(4.5.w),
+            decoration: BoxDecoration(
+              color: ThemeColors.cardSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: ThemeColors.cardBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Care desk',
+                  style: TextStyle(
+                    color: ThemeColors.textWhite,
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                1.5.h.vs,
+                const CareDeskButtons(isAccentCall: false),
+              ],
+            ),
+          ),
+
+          2.5.h.vs,
+
+          // ── Danger Log Out Button ─────────────────────────────────────
           SizedBox(
-            width: 25.w,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: ThemeColors.textMuted,
-                fontSize: 13.5.sp,
-                fontWeight: FontWeight.w500,
+            width: double.infinity,
+            height: 5.6.h,
+            child: OutlinedButton(
+              onPressed: c.promptSignOut,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ThemeColors.errorRedColor,
+                side: BorderSide(color: ThemeColors.errorRedColor.withValues(alpha: 0.4)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Obx(
+                () => c.isLoading.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: ThemeColors.errorRedColor,
+                        ),
+                      )
+                    : Text(
+                        'Log out',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: ThemeColors.textWhite,
-                fontSize: 13.5.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSignOutButton(ProfileController c) {
-    return InkWell(
-      onTap: c.signOut,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 1.6.h),
-        decoration: BoxDecoration(
-          color: ThemeColors.errorRedBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: ThemeColors.signOutBorder),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Sign out',
-          style: TextStyle(
-            color: ThemeColors.errorRedColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 15.sp,
-          ),
-        ),
+          4.h.vs,
+        ],
       ),
     );
   }

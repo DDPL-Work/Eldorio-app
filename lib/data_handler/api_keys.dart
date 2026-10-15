@@ -3,9 +3,9 @@ class BaseUrl {
 
   static const ENV_PRO = 'maven';
 
-  static String get websiteUrl => "https://maven-jobs.vercel.app";
+  static String get websiteUrl => "https://eldoria-lopd.onrender.com";
 
-  static const _mainDomain = 'https://maven-jobs.onrender.com';
+  static const _mainDomain = 'https://eldoria-lopd.onrender.com';
 
   static String get baseUrl => "$_mainDomain/api/v1/eldoriaCare-panel/";
 }

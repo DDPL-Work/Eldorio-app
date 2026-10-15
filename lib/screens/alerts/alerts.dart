@@ -1,9 +1,8 @@
-import 'package:eldoriaCare/screens/booking_requests/booking_r_details/booking_request_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/model/alert_model.dart';
-import 'package:eldoriaCare/screens/dashboard/controller.dart';
-import 'package:eldoriaCare/screens/home/visit_details/visit_detail_screen.dart';
+import 'package:eldoriaCare/data_handler/client_data_controller.dart';
+import 'package:eldoriaCare/model/client_models.dart';
+import 'package:eldoriaCare/screens/alerts/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
 
@@ -12,121 +11,159 @@ class AlertsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = DashboardController.to;
+    final c = Get.put(AlertsController());
+    final clientData = ClientDataController.to;
 
-    return Obx(() {
-      final list = c.alerts;
-
-      return SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 4.8.w, vertical: 2.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Header Title & Mark All Read ────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Notifications',
-                    style: TextStyle(
-                      color: ThemeColors.textWhite,
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (list.any((a) => !a.isRead))
-                    OutlinedButton(
-                      onPressed: c.markAllAlertsRead,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: ThemeColors.textWhite,
-                        side: const BorderSide(
-                          color: ThemeColors.whiteBorder40,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 3.2.w,
-                          vertical: 0.8.h,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        'Mark all read',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              2.h.vs,
-
-              // ── Notifications List ──────────────────────────────
-              if (list.isEmpty)
-                _buildEmptyAlerts()
-              else
-                ...list.map((a) => _buildAlertItem(c, a)),
-            ],
+    return Scaffold(
+      backgroundColor: ThemeColors.appBackground,
+      appBar: AppBar(
+        backgroundColor: ThemeColors.appBar,
+        elevation: 0,
+        title: Text(
+          'Notifications',
+          style: TextStyle(
+            color: ThemeColors.textWhite,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w800,
           ),
         ),
-      );
-    });
+        actions: [
+          Obx(() {
+            if (!c.hasUnread) return const SizedBox.shrink();
+
+            return Padding(
+              padding: EdgeInsets.only(right: 3.w),
+              child: TextButton(
+                onPressed: c.markAllRead,
+                child: Text(
+                  'Mark all read',
+                  style: TextStyle(
+                    color: ThemeColors.goldenAmber,
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+      body: Obx(() {
+        final list = clientData.notifications;
+
+        if (list.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  color: ThemeColors.cardSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: ThemeColors.cardBorder),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 15.w,
+                      height: 15.w,
+                      decoration: const BoxDecoration(
+                        color: ThemeColors.surface2,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: ThemeColors.goldenAmber,
+                        size: 26,
+                      ),
+                    ),
+                    2.h.vs,
+                    Text(
+                      'You\'re all caught up',
+                      style: TextStyle(
+                        color: ThemeColors.textWhite,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    0.6.h.vs,
+                    Text(
+                      'Booking updates will show here.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: ThemeColors.textMuted,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            final item = list[index];
+            return _buildNotificationCard(context, item, c);
+          },
+        );
+      }),
+    );
   }
 
-  Widget _buildAlertItem(DashboardController c, AlertModel a) {
+  Widget _buildNotificationCard(
+    BuildContext context,
+    ClientNotificationItem item,
+    AlertsController c,
+  ) {
     return Container(
       margin: EdgeInsets.only(bottom: 1.4.h),
       decoration: BoxDecoration(
         color: ThemeColors.cardSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: a.isRead ? ThemeColors.cardBorder : ThemeColors.lineBorder,
-          width: 1.0,
+          color: item.read ? ThemeColors.cardBorder : ThemeColors.goldenAmber.withValues(alpha: 0.5),
+          width: item.read ? 1 : 1.4,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: ThemeColors.shadowColorDark,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
-        color: ThemeColors.transparent,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () {
-            c.markAlertRead(a);
-            if (a.bookingId.isNotEmpty) {
-              final b = c.bookings.firstWhereOrNull(
-                (item) => item.id == a.bookingId,
-              );
-              if (b != null) {
-                if (b.isRequested || b.isConfirmed) {
-                  Get.to(() => BookingRequestDetailScreen(booking: b));
-                } else {
-                  Get.to(() => VisitDetailScreen(booking: b));
-                }
-              }
-            }
-          },
           borderRadius: BorderRadius.circular(16),
+          onTap: () => c.openNotification(item),
           child: Padding(
-            padding: EdgeInsets.all(3.6.w),
+            padding: EdgeInsets.all(4.w),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Icon Avatar
                 Container(
-                  width: 10.w,
-                  height: 10.w,
+                  width: 11.w,
+                  height: 11.w,
                   decoration: BoxDecoration(
                     color: ThemeColors.infoBlueBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.notifications_outlined,
+                  child: const Icon(
+                    Icons.notifications_rounded,
                     color: ThemeColors.infoBlueFg,
-                    size: 18.sp,
+                    size: 20,
                   ),
                 ),
-                3.w.hs,
+
+                3.5.w.hs,
 
                 // Content
                 Expanded(
@@ -134,41 +171,40 @@ class AlertsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        a.title,
+                        item.title,
                         style: TextStyle(
                           color: ThemeColors.textWhite,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14.5.sp,
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       0.4.h.vs,
                       Text(
-                        a.body,
+                        item.body,
                         style: TextStyle(
                           color: ThemeColors.textMuted,
-                          fontSize: 12.5.sp,
+                          fontSize: 11.5.sp,
                           height: 1.35,
                         ),
                       ),
-                      0.6.h.vs,
+                      0.8.h.vs,
                       Text(
-                        a.time,
+                        _formatTimeAgo(item.at),
                         style: TextStyle(
                           color: ThemeColors.textPlaceholder,
-                          fontSize: 11.5.sp,
+                          fontSize: 10.sp,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Unread Indicator Dot
-                if (!a.isRead) ...[
+                if (!item.read) ...[
                   2.w.hs,
                   Container(
-                    margin: EdgeInsets.only(top: 0.6.h),
-                    width: 2.w,
-                    height: 2.w,
+                    width: 9,
+                    height: 9,
+                    margin: const EdgeInsets.only(top: 4),
                     decoration: const BoxDecoration(
                       color: ThemeColors.goldenAmber,
                       shape: BoxShape.circle,
@@ -183,38 +219,14 @@ class AlertsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyAlerts() {
-    return Container(
-      padding: EdgeInsets.all(5.w),
-      decoration: BoxDecoration(
-        color: ThemeColors.cardSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ThemeColors.cardBorder),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.notifications_off_outlined,
-            size: 36.sp,
-            color: ThemeColors.textMuted,
-          ),
-          1.5.h.vs,
-          Text(
-            'You\'re all caught up',
-            style: TextStyle(
-              color: ThemeColors.textWhite,
-              fontWeight: FontWeight.w800,
-              fontSize: 15.sp,
-            ),
-          ),
-          0.8.h.vs,
-          Text(
-            'Booking updates and alerts will show here.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: ThemeColors.textMuted, fontSize: 12.5.sp),
-          ),
-        ],
-      ),
-    );
+  String _formatTimeAgo(int timestamp) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final diffMin = ((now - timestamp) / 60000).round();
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return '${diffMin}m ago';
+    final diffHours = (diffMin / 60).round();
+    if (diffHours < 24) return '${diffHours}h ago';
+    final diffDays = (diffHours / 24).round();
+    return '${diffDays}d ago';
   }
 }

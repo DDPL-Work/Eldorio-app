@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/screens/dashboard/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
@@ -11,6 +12,8 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final clientData = ClientDataController.to;
+
     return Obx(
       () => Container(
         decoration: BoxDecoration(
@@ -29,30 +32,30 @@ class BottomNavBar extends StatelessWidget {
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: 7.6.h,
+            height: 7.2.h,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(
-                  icon: Icons.checklist_rtl_rounded,
-                  label: 'Visits',
+                  icon: Icons.home_rounded,
+                  label: 'Home',
                   index: 0,
                   badgeCount: 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.calendar_month_outlined,
-                  label: 'Requests',
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Bookings',
                   index: 1,
-                  badgeCount: c.openRequests.length,
+                  badgeCount: 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.notifications_none_rounded,
+                  icon: Icons.notifications_rounded,
                   label: 'Alerts',
                   index: 2,
-                  badgeCount: c.unreadAlertsCount,
+                  badgeCount: clientData.unreadNotificationsCount,
                 ),
                 _buildNavItem(
-                  icon: Icons.person_outline_rounded,
+                  icon: Icons.person_rounded,
                   label: 'Profile',
                   index: 3,
                   badgeCount: 0,
@@ -109,8 +112,14 @@ class BottomNavBar extends StatelessWidget {
                         right: -2.w,
                         top: -0.6.h,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 1.2.w, vertical: 0.1.h),
-                          constraints: BoxConstraints(minWidth: 4.2.w, minHeight: 4.2.w),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 1.2.w,
+                            vertical: 0.1.h,
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 4.2.w,
+                            minHeight: 4.2.w,
+                          ),
                           decoration: const BoxDecoration(
                             color: ThemeColors.goldenAmber,
                             shape: BoxShape.circle,

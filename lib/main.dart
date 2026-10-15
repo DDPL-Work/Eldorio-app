@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/data_handler/repository.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:eldoriaCare/screens/splash/splash.dart';
@@ -27,6 +28,7 @@ Future<void> main() async {
 
   await Preference.init();
   Get.put(ThemeController(), permanent: true);
+  Get.put(ClientDataController(), permanent: true);
 
   final runnableApp = _buildRunnableApp(
     isWeb: kIsWeb,

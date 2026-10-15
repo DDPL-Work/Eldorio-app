@@ -1,124 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/data_handler/staff_service.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
 class LoginController extends GetxController {
   static LoginController get to => Get.find();
 
-  final staffService = StaffService.instance;
-
-  // ── Observables ───────────────────────────────────────────
-  final staffList = <StaffModel>[].obs;
-  final activeApplicant = Rxn<StaffModel>();
+  final isOtpStep = false.obs;
   final isLoading = false.obs;
-  final isOtpSent = false.obs;
-  final showPhoneLogin = false.obs;
+  final errorMessage = ''.obs;
 
-  // ── Form & Inputs ─────────────────────────────────────────
-  final formKey = GlobalKey<FormState>();
-  final phoneCtrl = TextEditingController();
-  final otpCtrl = TextEditingController();
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final otpController = TextEditingController();
+  final selectedCity = 'mumbai'.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadData();
+    final c = ClientDataController.to;
+    nameController.text = c.clientName.value;
+    phoneController.text = c.clientPhone.value;
+    selectedCity.value = c.clientCity.value;
   }
 
   @override
   void onClose() {
-    phoneCtrl.dispose();
-    otpCtrl.dispose();
+    nameController.dispose();
+    phoneController.dispose();
+    otpController.dispose();
     super.onClose();
   }
 
-  Future<void> loadData() async {
-    isLoading.value = true;
-    try {
-      final list = await staffService.getApprovedStaffList();
-      staffList.assignAll(list);
-
-      final applicant = await staffService.getCurrentApplicant();
-      activeApplicant.value = applicant;
-    } catch (_) {
-      // Graceful fallback
-    } finally {
-      isLoading.value = false;
-    }
+  void useDemoAccount() {
+    nameController.text = 'Priya Mehta';
+    phoneController.text = '9123456780';
+    selectedCity.value = 'mumbai';
+    otpController.text = '123456';
+    errorMessage.value = '';
+    isOtpStep.value = true;
+    Toasty.info('Demo account pre-filled. Tap Verify to continue.');
   }
 
-  // ── Quick Tap Staff Sign In ────────────────────────────────
-  Future<void> loginWithStaff(StaffModel staff) async {
-    isLoading.value = true;
-    try {
-      await staffService.loginAsStaff(staff);
-      Toasty.success('Welcome back, ${staff.name}!');
-      Get.offAllNamed(AppRoutes.home);
-    } catch (e) {
-      Toasty.failed('Could not sign in: $e');
-    } finally {
-      isLoading.value = false;
-    }
-  }
+  void sendOtp() {
+    errorMessage.value = '';
+    final name = nameController.text.trim();
+    final phone = phoneController.text.replaceAll(RegExp(r'\D'), '');
 
-  // ── Phone / OTP Sign In ────────────────────────────────────
-  Future<void> sendOtp() async {
-    final raw = phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
-    if (raw.length != 10) {
-      Toasty.failed('Enter a valid 10-digit mobile number');
+    if (name.isEmpty) {
+      errorMessage.value = 'Enter your name.';
+      Toasty.failed(errorMessage.value);
       return;
     }
 
-    isLoading.value = true;
-    try {
-      // Find staff by phone
-      final staff = staffList.firstWhereOrNull(
-        (s) => s.phone.replaceAll(RegExp(r'\D'), '').endsWith(raw),
-      );
-
-      if (staff == null) {
-        Toasty.failed(
-          'Mobile number not found in approved staff list. Please apply first or check your number.',
-        );
-        return;
-      }
-
-      isOtpSent.value = true;
-      otpCtrl.text = '123456'; // Pre-filled demo OTP for ease of test
-      Toasty.success('OTP sent to +91 $raw (Demo OTP: 123456)');
-    } finally {
-      isLoading.value = false;
+    if (phone.length != 10) {
+      errorMessage.value = 'Enter a 10-digit mobile number.';
+      Toasty.failed(errorMessage.value);
+      return;
     }
+
+    isOtpStep.value = true;
+    otpController.clear();
+    Toasty.success('OTP sent to +91 $phone');
   }
 
   Future<void> verifyOtp() async {
-    final otp = otpCtrl.text.trim();
-    if (otp.length < 4) {
-      Toasty.failed('Enter a valid OTP');
+    errorMessage.value = '';
+    final otp = otpController.text.trim();
+
+    if (otp != '123456') {
+      errorMessage.value = 'That OTP is incorrect. In this demo, use 123456.';
+      Toasty.failed(errorMessage.value);
       return;
     }
 
-    final raw = phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
-    final staff = staffList.firstWhereOrNull(
-      (s) => s.phone.replaceAll(RegExp(r'\D'), '').endsWith(raw),
-    );
+    isLoading.value = true;
+    try {
+      final c = ClientDataController.to;
+      await c.login(
+        name: nameController.text.trim(),
+        phone: phoneController.text.replaceAll(RegExp(r'\D'), ''),
+        city: selectedCity.value,
+      );
 
-    if (staff != null) {
-      await loginWithStaff(staff);
-    } else {
-      Toasty.failed('Staff record not found');
+      Toasty.success('Welcome to Eldoria Care, ${c.clientName.value}!');
+      Get.offAllNamed(AppRoutes.home);
+    } catch (e) {
+      errorMessage.value = 'Failed to log in. Please try again.';
+      Toasty.failed(errorMessage.value);
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  // ── Navigation Shortcuts ──────────────────────────────────
-  void goToJoin() {
-    Get.toNamed(AppRoutes.joinStaff);
-  }
-
-  void goToTrack([String? trackId]) {
-    Get.toNamed(AppRoutes.trackApplication, arguments: {'trackId': trackId});
+  void changeNumber() {
+    isOtpStep.value = false;
+    errorMessage.value = '';
+    otpController.clear();
   }
 }
