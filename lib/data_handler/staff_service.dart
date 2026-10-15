@@ -16,6 +16,7 @@ class StaffService {
   static const String _kOnDuty = 'eldoria_onduty_v1';
 
   static StaffService? _instance;
+
   static StaffService get instance => _instance ??= StaffService._();
 
   StaffService._();
@@ -146,6 +147,7 @@ class StaffService {
         docs: 'verified',
         onDuty: true,
         approval: 'approved',
+        staffId: 'STF001',
       ),
       StaffModel(
         id: 's2',
@@ -154,12 +156,17 @@ class StaffService {
         phone: '9876543211',
         city: 'mumbai',
         area: 'Dadar, Worli',
-        skills: ['Physiotherapy', 'Stroke & paralysis care', 'Post-surgery care'],
+        skills: [
+          'Physiotherapy',
+          'Stroke & paralysis care',
+          'Post-surgery care',
+        ],
         languages: ['Hindi', 'Marathi', 'English'],
         availability: ['Day visits'],
         docs: 'verified',
         onDuty: true,
         approval: 'approved',
+        staffId: 'STF002',
       ),
       StaffModel(
         id: 's3',
@@ -174,48 +181,7 @@ class StaffService {
         docs: 'verified',
         onDuty: true,
         approval: 'approved',
-      ),
-      StaffModel(
-        id: 's4',
-        name: "Joseph D'Souza",
-        role: 'ANM Nurse',
-        phone: '9876543213',
-        city: 'mumbai',
-        area: 'Bandra, Khar',
-        skills: ['Wound dressing', 'Injections & IV', 'Vital monitoring'],
-        languages: ['English', 'Hindi'],
-        availability: ['Day visits'],
-        docs: 'verified',
-        onDuty: false,
-        approval: 'approved',
-      ),
-      StaffModel(
-        id: 's5',
-        name: 'Lata Pawar',
-        role: 'GNM Nurse',
-        phone: '9876543214',
-        city: 'thane',
-        area: 'Thane West',
-        skills: ['Post-surgery care', 'Catheter care', 'Ryles tube care'],
-        languages: ['Hindi', 'Marathi'],
-        availability: ['Day visits', '12-hr shifts'],
-        docs: 'verified',
-        onDuty: true,
-        approval: 'approved',
-      ),
-      StaffModel(
-        id: 's6',
-        name: 'Kiran Jadhav',
-        role: 'Patient Attendant',
-        phone: '9876543215',
-        city: 'pune',
-        area: 'Kothrud',
-        skills: ['Elder care', 'Night shifts', 'Vital monitoring'],
-        languages: ['Hindi', 'Marathi'],
-        availability: ['12-hr shifts'],
-        docs: 'verified',
-        onDuty: false,
-        approval: 'approved',
+        staffId: 'STF001',
       ),
     ];
   }
@@ -237,7 +203,7 @@ class StaffService {
         address: 'Room 14, Sai Krupa Chawl, Marol, Andheri East, Mumbai 400059',
         qualification: 'GNM Nursing, 2018',
         regNo: 'MNC-204511',
-        experience: 6,
+        experience: "6",
         skills: ['Elder care', 'Injections & IV', 'Wound dressing'],
         languages: ['Hindi', 'Marathi', 'English'],
         availability: ['Day visits', '12-hr shifts'],
@@ -248,15 +214,7 @@ class StaffService {
         approval: 'pending',
         docs: 'pending',
         onDuty: false,
-        submittedAt: now - (95 * 60 * 1000),
-        appHistory: [
-          {
-            'status': 'pending',
-            'at': now - (95 * 60 * 1000),
-            'by': 'applicant',
-            'note': 'Application submitted',
-          }
-        ],
+        staffId: 'STF001',
       ),
       StaffModel(
         id: 'app2',
@@ -271,7 +229,7 @@ class StaffService {
         address: 'Flat 6, Laxmi Niwas, Kurla West, Mumbai 400070',
         qualification: 'Caregiver certificate course, 2020',
         regNo: '',
-        experience: 4,
+        experience: "4",
         skills: ['Elder care', 'Bedridden care', 'Dementia / Alzheimer’s care'],
         languages: ['Hindi', 'Marathi'],
         availability: ['24-hr live-in'],
@@ -282,24 +240,7 @@ class StaffService {
         approval: 'changes',
         docs: 'pending',
         onDuty: false,
-        reviewNote:
-            'Your ID photo is blurry. Please upload a clearer photo of the front side.',
-        submittedAt: now - (90 * 60 * 1000),
-        appHistory: [
-          {
-            'status': 'changes',
-            'at': now - (40 * 60 * 1000),
-            'by': 'admin',
-            'note':
-                'Your ID photo is blurry. Please upload a clearer photo of the front side.',
-          },
-          {
-            'status': 'pending',
-            'at': now - (90 * 60 * 1000),
-            'by': 'applicant',
-            'note': 'Application submitted',
-          }
-        ],
+        staffId: 'STF001',
       ),
       StaffModel(
         id: 'app3',
@@ -314,7 +255,7 @@ class StaffService {
         address: '22, Shell Colony, Chembur, Mumbai 400071',
         qualification: 'B.Sc Nursing, 2012',
         regNo: 'MNC-118820',
-        experience: 11,
+        experience: "11",
         skills: ['Post-surgery care', 'Catheter care', 'Injections & IV'],
         languages: ['English', 'Hindi', 'Malayalam'],
         availability: ['Day visits', '12-hr shifts'],
@@ -325,21 +266,7 @@ class StaffService {
         approval: 'approved',
         docs: 'verified',
         onDuty: true,
-        submittedAt: now - (85 * 60 * 1000),
-        appHistory: [
-          {
-            'status': 'approved',
-            'at': now - (30 * 60 * 1000),
-            'by': 'admin',
-            'note': 'Application approved by Care Desk',
-          },
-          {
-            'status': 'pending',
-            'at': now - (85 * 60 * 1000),
-            'by': 'applicant',
-            'note': 'Application submitted',
-          }
-        ],
+        staffId: 'STF001',
       ),
     ];
   }
@@ -389,9 +316,9 @@ class StaffService {
   Future<StaffModel?> getApplicationById(String id) async {
     final all = await getAllApplications();
     return all.cast<StaffModel?>().firstWhere(
-          (element) => element?.id == id,
-          orElse: () => null,
-        );
+      (element) => element?.id == id,
+      orElse: () => null,
+    );
   }
 
   Future<StaffModel?> findApplicationByPhone(String rawPhone) async {
@@ -619,7 +546,8 @@ class StaffService {
         plan: '12-hr shift',
         date: 'Tomorrow',
         time: '9:00 AM',
-        address: 'Flat 402, Sea Breeze CHS, Lokhandwala, Andheri West, Mumbai 400053',
+        address:
+            'Flat 402, Sea Breeze CHS, Lokhandwala, Andheri West, Mumbai 400053',
         notes: 'Needs help walking and with evening medicines.',
         source: 'App',
         status: 'requested',
@@ -636,7 +564,8 @@ class StaffService {
         id: 'n1',
         to: 'staff:s1',
         title: 'New booking request ELD-20436',
-        body: 'Injection & Dressing for Zubeida Khan, 67 · Today, 8:00 PM · Hill Road, Bandra West',
+        body:
+            'Injection & Dressing for Zubeida Khan, 67 · Today, 8:00 PM · Hill Road, Bandra West',
         time: '5 Oct, 11:54 AM',
         bookingId: 'b7',
         isRead: false,
@@ -645,7 +574,8 @@ class StaffService {
         id: 'n2',
         to: 'staff:s1',
         title: 'New booking request ELD-34828',
-        body: 'Elder Caregiver for Ramesh Mehta, 76 · 12-hr shift · Lokhandwala, Andheri West',
+        body:
+            'Elder Caregiver for Ramesh Mehta, 76 · 12-hr shift · Lokhandwala, Andheri West',
         time: '5 Oct, 11:50 AM',
         bookingId: 'b12',
         isRead: false,
@@ -654,7 +584,8 @@ class StaffService {
         id: 'n3',
         to: 'staff:s1',
         title: 'New booking request ELD-20431',
-        body: '24-hr Attendant for Shanta Desai, 81 · Tomorrow, 9:00 AM · B-12, Gokul Dham, Borivali East',
+        body:
+            '24-hr Attendant for Shanta Desai, 81 · Tomorrow, 9:00 AM · B-12, Gokul Dham, Borivali East',
         time: '5 Oct, 11:37 AM',
         bookingId: 'b4',
         isRead: false,
@@ -663,7 +594,8 @@ class StaffService {
         id: 'n4',
         to: 'staff:s1',
         title: 'New visit assigned',
-        body: 'Farhan Shaikh · Post-Surgery Care · Today, 4:00 PM · Shastri Nagar, Jogeshwari West',
+        body:
+            'Farhan Shaikh · Post-Surgery Care · Today, 4:00 PM · Shastri Nagar, Jogeshwari West',
         time: '5 Oct, 2:12 AM',
         bookingId: 'b8',
         isRead: false,
@@ -676,12 +608,17 @@ class StaffService {
     final jsonStr = prefs.getString(_kBookings);
     if (jsonStr == null || jsonStr.isEmpty) {
       final list = _defaultBookings();
-      await prefs.setString(_kBookings, jsonEncode(list.map((e) => e.toJson()).toList()));
+      await prefs.setString(
+        _kBookings,
+        jsonEncode(list.map((e) => e.toJson()).toList()),
+      );
       return list;
     }
     try {
       final List decoded = jsonDecode(jsonStr);
-      return decoded.map((e) => BookingModel.fromJson(e as Map<String, dynamic>)).toList();
+      return decoded
+          .map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return _defaultBookings();
     }
@@ -689,7 +626,10 @@ class StaffService {
 
   Future<void> saveBookings(List<BookingModel> list) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kBookings, jsonEncode(list.map((e) => e.toJson()).toList()));
+    await prefs.setString(
+      _kBookings,
+      jsonEncode(list.map((e) => e.toJson()).toList()),
+    );
   }
 
   Future<void> updateBooking(BookingModel booking) async {
@@ -708,12 +648,17 @@ class StaffService {
     final jsonStr = prefs.getString(_kAlerts);
     if (jsonStr == null || jsonStr.isEmpty) {
       final list = _defaultAlerts();
-      await prefs.setString(_kAlerts, jsonEncode(list.map((e) => e.toJson()).toList()));
+      await prefs.setString(
+        _kAlerts,
+        jsonEncode(list.map((e) => e.toJson()).toList()),
+      );
       return list;
     }
     try {
       final List decoded = jsonDecode(jsonStr);
-      return decoded.map((e) => AlertModel.fromJson(e as Map<String, dynamic>)).toList();
+      return decoded
+          .map((e) => AlertModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return _defaultAlerts();
     }
@@ -721,7 +666,10 @@ class StaffService {
 
   Future<void> saveAlerts(List<AlertModel> list) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kAlerts, jsonEncode(list.map((e) => e.toJson()).toList()));
+    await prefs.setString(
+      _kAlerts,
+      jsonEncode(list.map((e) => e.toJson()).toList()),
+    );
   }
 
   Future<void> markAllAlertsRead() async {

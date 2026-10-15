@@ -65,7 +65,7 @@ class ApiProvider {
       headers: {
         'pn': Const.packageName.isNotEmpty
             ? Const.packageName
-            : 'com.example.eldoriaCare',
+            : 'com.eldoria.staff',
         'vc': Const.versionCode.isNotEmpty ? Const.versionCode : '1',
         'vn': Const.versionName.isNotEmpty ? Const.versionName : '1.0.0',
         'ot': PlatformType.platformType,

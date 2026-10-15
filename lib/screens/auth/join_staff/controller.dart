@@ -7,8 +7,8 @@ import 'package:eldoriaCare/model/staff_model.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
-class OnboardingController extends GetxController {
-  static OnboardingController get to => Get.find();
+class JoiningController extends GetxController {
+  static JoiningController get to => Get.find();
 
   final staffService = StaffService.instance;
   final picker = ImagePicker();
@@ -298,7 +298,7 @@ class OnboardingController extends GetxController {
         address: addressCtrl.text.trim(),
         qualification: qualificationCtrl.text.trim(),
         regNo: regNoCtrl.text.trim().isNotEmpty ? regNoCtrl.text.trim() : null,
-        experience: int.tryParse(experienceCtrl.text.trim()) ?? 0,
+        experience: experienceCtrl.text.trim(),
         skills: selectedSkills.toList(),
         languages: selectedLanguages.toList(),
         availability: selectedAvailability.toList(),
@@ -310,8 +310,7 @@ class OnboardingController extends GetxController {
         approval: 'pending',
         docs: 'pending',
         onDuty: false,
-        submittedAt: now,
-        appHistory: [historyEntry],
+        staffId: 'ljkhlkh'
       );
 
       await staffService.saveApplication(newApplication);
@@ -324,7 +323,7 @@ class OnboardingController extends GetxController {
 
       // Navigate to Track Application Screen
       Get.offNamed(
-        AppRoutes.trackApplication,
+        AppRoutes.trackJoiningStatus,
         arguments: {'trackId': appId},
       );
     } catch (e) {

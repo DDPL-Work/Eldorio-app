@@ -53,6 +53,20 @@ class Repository extends ApiProvider {
     );
   }
 
+  Future<dynamic> sendOtp(String number) async {
+    return super.postJson(
+      'auth/staff/send-otp',
+      parameters: {'phone': number},
+    );
+  }
+
+  Future<dynamic> verifyOtp(String phone, String otp) async {
+    return super.postJson(
+      'auth/staff/verify-otp',
+      parameters: {'phone': phone, 'otp': otp},
+    );
+  }
+
   Future<dynamic> updateProfile(Map<String, dynamic> data) async {
     return super.patchDynamic('profile', parameters: data);
   }

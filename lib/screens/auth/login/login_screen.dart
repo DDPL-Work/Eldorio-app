@@ -1,3 +1,4 @@
+import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eldoriaCare/model/staff_model.dart';
@@ -74,12 +75,7 @@ class _LoginScreenState extends State<LoginScreen>
                     // C. Approved Staff Sign In Header
                     _buildSignInHeader(context),
 
-                    1.2.h.vs,
-
-                    // D. Demo Notice Banner
-                    _buildDemoNotice(),
-
-                    1.5.h.vs,
+                    // 1.5.h.vs,
 
                     // E. Staff List or Phone Sign In View
                     Obx(() {
@@ -443,7 +439,7 @@ class _LoginScreenState extends State<LoginScreen>
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: c.goToJoin,
+                        onPressed: () => Get.toNamed(AppRoutes.joinStaff),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ThemeColors.goldenAmber,
                           foregroundColor: ThemeColors.accentInk,
@@ -519,27 +515,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ── Demo Notice Banner ──────────────────────────────────────────────
-  Widget _buildDemoNotice() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 3.5.w, vertical: 1.5.h),
-      decoration: BoxDecoration(
-        color: ThemeColors.goldenAmberBg, // Dark warm amber from reference
-        borderRadius: BorderRadius.circular(3.w),
-      ),
-      child: Text(
-        'Demo mode: pick your name to sign in. Real OTP login comes with the Android build.',
-        style: TextStyle(
-          color: ThemeColors.goldenAmberLight,
-          // Golden amber text from reference
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w600,
-          height: 1.35,
-        ),
-      ),
-    );
-  }
-
   // ── List of Approved Staff ──────────────────────────────────────────
   Widget _buildStaffListView(BuildContext context) {
     if (c.staffList.isEmpty) {
@@ -594,7 +569,8 @@ class _LoginScreenState extends State<LoginScreen>
       color: ThemeColors.cardSurface, // Reference dark navy card
       borderRadius: BorderRadius.circular(4.w),
       child: InkWell(
-        onTap: () => c.loginWithStaff(staff),
+        // onTap: () => c.loginWithStaff(staff),
+        // onTap: () => c.staffList.clear(),
         borderRadius: BorderRadius.circular(4.w),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 3.5.w, vertical: 1.5.h),
@@ -682,7 +658,7 @@ class _LoginScreenState extends State<LoginScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Sign in with registered mobile',
+            'Sign in with registered number',
             style: TextStyle(
               color: ThemeColors.textWhite,
               fontWeight: FontWeight.w700,
@@ -691,7 +667,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           0.5.h.vs,
           Text(
-            'Enter the 10-digit mobile number associated with your approved staff profile.',
+            'Enter the 10-digit mobile number',
             style: TextStyle(color: ThemeColors.textMuted, fontSize: 13.sp),
           ),
           2.h.vs,
@@ -793,7 +769,7 @@ class _LoginScreenState extends State<LoginScreen>
                 MyButton(
                   label: 'Verify & Sign In',
                   isLoading: c.isLoading.value,
-                  onPressed: c.verifyOtp,
+                  onPressed: () => c.verifyOtp(c.phoneCtrl.text.trim()),
                 ),
                 1.h.vs,
                 TextButton(

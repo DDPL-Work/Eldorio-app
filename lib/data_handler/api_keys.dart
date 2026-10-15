@@ -1,12 +1,12 @@
 class BaseUrl {
-  static const ENV_DEV = 'maven';
+  static const ENV_DEV = 'Eldoria';
 
-  static const ENV_PRO = 'maven';
+  static const ENV_PRO = 'Eldoria';
 
-  static String get websiteUrl => "https://maven-jobs.vercel.app";
+  static String get websiteUrl => "https://eldoria-jobs.vercel.app";
 
-  static const _mainDomain = 'https://maven-jobs.onrender.com';
+  static const _mainDomain = 'https://eldoria-lopd.onrender.com';
 
-  static String get baseUrl => "$_mainDomain/api/v1/eldoriaCare-panel/";
+  static String get baseUrl => "$_mainDomain/api/v1/";
 }
 

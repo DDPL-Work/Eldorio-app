@@ -19,7 +19,6 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Header Title ──────────────────────────────────────
             Text(
               'Profile',
               style: TextStyle(
@@ -30,11 +29,9 @@ class ProfileScreen extends StatelessWidget {
             ),
             2.h.vs,
 
-            // ── Profile Card ──────────────────────────────────────
             Obx(() => _buildProfileCard(c.currentStaff.value)),
             2.5.h.vs,
 
-            // ── Sign Out Button ───────────────────────────────────
             _buildSignOutButton(c),
           ],
         ),

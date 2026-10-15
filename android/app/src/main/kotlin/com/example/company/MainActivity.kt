@@ -1,4 +1,4 @@
-package com.example.eldoriaCare
+package com.eldoria.staff
 
 import io.flutter.embedding.android.FlutterActivity
 

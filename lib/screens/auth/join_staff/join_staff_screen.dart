@@ -1,14 +1,14 @@
+import 'package:eldoriaCare/screens/auth/join_staff/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
-import 'package:eldoriaCare/screens/auth/onboarding/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
 import 'package:eldoriaCare/widget/my_button.dart';
 
-class JoinEldoriaScreen extends StatelessWidget {
-  const JoinEldoriaScreen({super.key});
+class JoinStaffScreen extends StatelessWidget {
+  JoinStaffScreen({super.key});
 
   static const List<String> stepTitles = [
     'Your details',
@@ -25,19 +25,21 @@ class JoinEldoriaScreen extends StatelessWidget {
   static const Color textMutedColor = ThemeColors.textMuted;
   static const Color textLabelColor = ThemeColors.textSlateMuted;
 
+  final c = Get.put(JoiningController());
+
   @override
   Widget build(BuildContext context) {
     SizeConfig.initWithContext(context);
-    final c = Get.put(OnboardingController());
+    final c = Get.put(JoiningController());
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: _buildAppBar(c),
+      appBar: _buildAppBar(),
       body: SafeArea(
         child: Column(
           children: [
             // ── Step Progress Indicator ─────────────────────────
-            _buildProgressBar(c),
+            _buildProgressBar(),
 
             // ── Step Content Form ───────────────────────────────
             Expanded(
@@ -47,13 +49,13 @@ class JoinEldoriaScreen extends StatelessWidget {
                 child: Obx(() {
                   switch (c.currentStep.value) {
                     case 1:
-                      return _buildStep1YourDetails(c, context);
+                      return _buildStep1YourDetails(context);
                     case 2:
-                      return _buildStep2WorkProfile(c);
+                      return _buildStep2WorkProfile();
                     case 3:
-                      return _buildStep3Documents(c);
+                      return _buildStep3Documents();
                     case 4:
-                      return _buildStep4Review(c);
+                      return _buildStep4Review();
                     default:
                       return const SizedBox.shrink();
                   }
@@ -62,7 +64,7 @@ class JoinEldoriaScreen extends StatelessWidget {
             ),
 
             // ── Sticky Bottom Navigation Bar ────────────────────
-            _buildBottomBar(c),
+            _buildBottomBar(),
           ],
         ),
       ),
@@ -70,12 +72,16 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Top Header / App Bar ────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar(OnboardingController c) {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: ThemeColors.sceneDarkNavy,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios_new_rounded, color: ThemeColors.textWhite, size: 20.sp),
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: ThemeColors.textWhite,
+          size: 20.sp,
+        ),
         onPressed: c.prevStep,
       ),
       title: Obx(
@@ -105,22 +111,32 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Step Progress Indicator ─────────────────────────────────────────
-  Widget _buildProgressBar(OnboardingController c) {
+  Widget _buildProgressBar() {
     return Obx(
       () => Container(
-        height: 0.6.h,
-        color: ThemeColors.stepProgressTrack,
+        color: ThemeColors.sceneDarkNavy,
+        padding: EdgeInsets.fromLTRB(2, .4.h, 2, 0),
         child: Row(
-          children: List.generate(4, (index) {
+          children: List.generate(stepTitles.length, (index) {
             final isActive = index < c.currentStep.value;
             return Expanded(
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 0.4.w),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: 6,
+                margin: EdgeInsets.symmetric(horizontal: 0.8.w),
                 decoration: BoxDecoration(
-                  color: isActive
-                      ? ThemeColors.goldenAmber
-                      : ThemeColors.transparent,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(100),
+                  color: isActive ? null : const Color(0xFF20324E),
+                  gradient: isActive
+                      ? const LinearGradient(
+                          colors: [
+                            ThemeColors.brandBlueLight,
+                            ThemeColors.goldenAmber,
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        )
+                      : null,
                 ),
               ),
             );
@@ -131,10 +147,7 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Step 1: Your Details ────────────────────────────────────────────
-  Widget _buildStep1YourDetails(
-    OnboardingController c,
-    BuildContext context,
-  ) {
+  Widget _buildStep1YourDetails(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -157,11 +170,12 @@ class JoinEldoriaScreen extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 3.6.w, vertical: 1.6.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 3.6.w,
+                  vertical: 1.6.h,
+                ),
                 decoration: const BoxDecoration(
-                  border: Border(
-                    right: BorderSide(color: inputBorderColor),
-                  ),
+                  border: Border(right: BorderSide(color: inputBorderColor)),
                 ),
                 child: Text(
                   '+91',
@@ -184,7 +198,10 @@ class JoinEldoriaScreen extends StatelessWidget {
                   ),
                   decoration: InputDecoration(
                     hintText: '98765 43210',
-                    hintStyle: TextStyle(color: ThemeColors.textPlaceholder, fontSize: 14.sp),
+                    hintStyle: TextStyle(
+                      color: ThemeColors.textPlaceholder,
+                      fontSize: 14.sp,
+                    ),
                     counterText: '',
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 3.6.w),
@@ -219,17 +236,26 @@ class JoinEldoriaScreen extends StatelessWidget {
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
-                        initialDate: DateTime.now().subtract(const Duration(days: 365 * 25)),
+                        initialDate: DateTime.now().subtract(
+                          const Duration(days: 365 * 25),
+                        ),
                         firstDate: DateTime(1950),
-                        lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+                        lastDate: DateTime.now().subtract(
+                          const Duration(days: 365 * 18),
+                        ),
                       );
                       if (picked != null) {
-                        c.dobCtrl.text = DateFormat('yyyy-MM-dd').format(picked);
+                        c.dobCtrl.text = DateFormat(
+                          'yyyy-MM-dd',
+                        ).format(picked);
                       }
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 3.2.w, vertical: 1.6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 3.2.w,
+                        vertical: 1.6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: inputBgColor,
                         borderRadius: BorderRadius.circular(12),
@@ -240,7 +266,9 @@ class JoinEldoriaScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              c.dobCtrl.text.isEmpty ? 'Select date' : c.dobCtrl.text,
+                              c.dobCtrl.text.isEmpty
+                                  ? 'Select date'
+                                  : c.dobCtrl.text,
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 color: c.dobCtrl.text.isEmpty
@@ -250,7 +278,11 @@ class JoinEldoriaScreen extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Icon(Icons.calendar_today_rounded, size: 16.sp, color: textMutedColor),
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16.sp,
+                            color: textMutedColor,
+                          ),
                         ],
                       ),
                     ),
@@ -281,10 +313,16 @@ class JoinEldoriaScreen extends StatelessWidget {
                           dropdownColor: cardColor,
                           hint: Text(
                             'Select',
-                            style: TextStyle(fontSize: 14.sp, color: ThemeColors.textPlaceholder),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: ThemeColors.textPlaceholder,
+                            ),
                           ),
                           isExpanded: true,
-                          style: TextStyle(color: ThemeColors.textWhite, fontSize: 14.sp),
+                          style: TextStyle(
+                            color: ThemeColors.textWhite,
+                            fontSize: 14.sp,
+                          ),
                           items: ['Female', 'Male', 'Other'].map((g) {
                             return DropdownMenuItem(value: g, child: Text(g));
                           }).toList(),
@@ -323,7 +361,10 @@ class JoinEldoriaScreen extends StatelessWidget {
                           value: c.selectedCity.value,
                           dropdownColor: cardColor,
                           isExpanded: true,
-                          style: TextStyle(color: ThemeColors.textWhite, fontSize: 14.sp),
+                          style: TextStyle(
+                            color: ThemeColors.textWhite,
+                            fontSize: 14.sp,
+                          ),
                           items: StaffService.defaultCities.map((city) {
                             return DropdownMenuItem(
                               value: city['id'],
@@ -364,7 +405,7 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Step 2: Work Profile ────────────────────────────────────
-  Widget _buildStep2WorkProfile(OnboardingController c) {
+  Widget _buildStep2WorkProfile() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -601,7 +642,7 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Step 3: Documents ───────────────────────────────────────────────
-  Widget _buildStep3Documents(OnboardingController c) {
+  Widget _buildStep3Documents() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -614,7 +655,11 @@ class JoinEldoriaScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.privacy_tip_outlined, color: ThemeColors.goldenAmber, size: 20.sp),
+              Icon(
+                Icons.privacy_tip_outlined,
+                color: ThemeColors.goldenAmber,
+                size: 20.sp,
+              ),
               10.hs,
               Expanded(
                 child: Text(
@@ -650,7 +695,9 @@ class JoinEldoriaScreen extends StatelessWidget {
                 color: cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isUploaded ? ThemeColors.successGreenBorder : cardBorderColor,
+                  color: isUploaded
+                      ? ThemeColors.successGreenBorder
+                      : cardBorderColor,
                   width: isUploaded ? 1.5 : 1.0,
                 ),
               ),
@@ -678,8 +725,12 @@ class JoinEldoriaScreen extends StatelessWidget {
                             ),
                           )
                         : Icon(
-                            isUploaded ? Icons.check_circle_rounded : Icons.description_outlined,
-                            color: isUploaded ? ThemeColors.successGreen : textMutedColor,
+                            isUploaded
+                                ? Icons.check_circle_rounded
+                                : Icons.description_outlined,
+                            color: isUploaded
+                                ? ThemeColors.successGreen
+                                : textMutedColor,
                             size: 26.sp,
                           ),
                   ),
@@ -703,7 +754,10 @@ class JoinEldoriaScreen extends StatelessWidget {
                             6.hs,
                             if (isReq)
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 1.6.w, vertical: 0.3.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 1.6.w,
+                                  vertical: 0.3.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: ThemeColors.goldenAmberBg,
                                   borderRadius: BorderRadius.circular(4),
@@ -720,7 +774,10 @@ class JoinEldoriaScreen extends StatelessWidget {
                             else
                               Text(
                                 'Optional',
-                                style: TextStyle(fontSize: 11.sp, color: textMutedColor),
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: textMutedColor,
+                                ),
                               ),
                           ],
                         ),
@@ -731,7 +788,9 @@ class JoinEldoriaScreen extends StatelessWidget {
                               : hint,
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: isUploaded ? ThemeColors.successGreen : textMutedColor,
+                            color: isUploaded
+                                ? ThemeColors.successGreen
+                                : textMutedColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -742,11 +801,17 @@ class JoinEldoriaScreen extends StatelessWidget {
 
                   // Upload Button
                   OutlinedButton(
-                    onPressed: () => c.pickDocument(key, imageOnly: key == 'photo'),
+                    onPressed: () =>
+                        c.pickDocument(key, imageOnly: key == 'photo'),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 3.w,
+                        vertical: 1.h,
+                      ),
                       side: BorderSide(
-                        color: isUploaded ? cardBorderColor : ThemeColors.goldenAmber,
+                        color: isUploaded
+                            ? cardBorderColor
+                            : ThemeColors.goldenAmber,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -757,7 +822,9 @@ class JoinEldoriaScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w700,
-                        color: isUploaded ? textMutedColor : ThemeColors.goldenAmber,
+                        color: isUploaded
+                            ? textMutedColor
+                            : ThemeColors.goldenAmber,
                       ),
                     ),
                   ),
@@ -771,7 +838,7 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Step 4: Review & Submit ─────────────────────────────────────────
-  Widget _buildStep4Review(OnboardingController c) {
+  Widget _buildStep4Review() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -793,8 +860,14 @@ class JoinEldoriaScreen extends StatelessWidget {
                 'Age & Gender',
                 '${c.calculatedAge} yrs · ${c.selectedGender.value ?? ''}',
               ),
-              _buildReviewRow('Location', '${c.areaCtrl.text}, ${c.selectedCity.value.capitalizeFirst}'),
-              _buildReviewRow('Role', '${c.selectedRole.value} · ${c.experienceCtrl.text} yrs exp'),
+              _buildReviewRow(
+                'Location',
+                '${c.areaCtrl.text}, ${c.selectedCity.value.capitalizeFirst}',
+              ),
+              _buildReviewRow(
+                'Role',
+                '${c.selectedRole.value} · ${c.experienceCtrl.text} yrs exp',
+              ),
               _buildReviewRow(
                 'Qualification',
                 '${c.qualificationCtrl.text}${c.regNoCtrl.text.isNotEmpty ? ' · Reg: ${c.regNoCtrl.text}' : ''}',
@@ -836,7 +909,10 @@ class JoinEldoriaScreen extends StatelessWidget {
                 runSpacing: 1.h,
                 children: c.uploadedDocs.entries.map((entry) {
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 2.5.w, vertical: 0.8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 2.5.w,
+                      vertical: 0.8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: ThemeColors.successGreenBg,
                       borderRadius: BorderRadius.circular(8),
@@ -844,7 +920,11 @@ class JoinEldoriaScreen extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle_rounded, size: 14.sp, color: ThemeColors.successGreen),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 14.sp,
+                          color: ThemeColors.successGreen,
+                        ),
                         5.hs,
                         Text(
                           entry.key.capitalizeFirst ?? '',
@@ -876,10 +956,13 @@ class JoinEldoriaScreen extends StatelessWidget {
                 children: [
                   Checkbox(
                     value: c.declarationAgreed.value,
-                    onChanged: (val) => c.declarationAgreed.value = val ?? false,
+                    onChanged: (val) =>
+                        c.declarationAgreed.value = val ?? false,
                     activeColor: ThemeColors.goldenAmber,
                     checkColor: ThemeColors.deepNavy,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   Expanded(
                     child: Padding(
@@ -937,14 +1020,12 @@ class JoinEldoriaScreen extends StatelessWidget {
   }
 
   // ── Bottom Sticky Bar ───────────────────────────────────────────────
-  Widget _buildBottomBar(OnboardingController c) {
+  Widget _buildBottomBar() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.8.w, vertical: 1.5.h),
       decoration: const BoxDecoration(
         color: ThemeColors.sceneDarkNavy,
-        border: Border(
-          top: BorderSide(color: cardBorderColor),
-        ),
+        border: Border(top: BorderSide(color: cardBorderColor)),
       ),
       child: Obx(
         () => Row(
@@ -955,19 +1036,34 @@ class JoinEldoriaScreen extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ThemeColors.textWhite,
                   side: const BorderSide(color: ThemeColors.whiteBorder40),
-                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.8.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 5.w,
+                    vertical: 1.8.h,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: Text('Back', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp)),
+                child: Text(
+                  'Back',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                  ),
+                ),
               ),
               12.hs,
             ],
             Expanded(
               child: MyButton(
                 label: c.currentStep.value == 4
-                    ? (c.editingId != null ? 'Resubmit application' : 'Submit application')
+                    ? (c.editingId != null
+                          ? 'Resubmit application'
+                          : 'Submit application')
                     : 'Continue',
-                color: c.currentStep.value == 4 ? ThemeColors.goldenAmber : null,
+                color: c.currentStep.value == 4
+                    ? ThemeColors.goldenAmber
+                    : null,
                 isLoading: c.isSubmitting.value,
                 onPressed: c.nextStep,
               ),
@@ -1009,10 +1105,16 @@ class JoinEldoriaScreen extends StatelessWidget {
           style: TextStyle(color: ThemeColors.textWhite, fontSize: 14.5.sp),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: ThemeColors.textPlaceholder, fontSize: 13.5.sp),
+            hintStyle: TextStyle(
+              color: ThemeColors.textPlaceholder,
+              fontSize: 13.5.sp,
+            ),
             filled: true,
             fillColor: inputBgColor,
-            contentPadding: EdgeInsets.symmetric(horizontal: 3.6.w, vertical: 1.5.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 3.6.w,
+              vertical: 1.5.h,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: inputBorderColor),
