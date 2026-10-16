@@ -58,6 +58,10 @@ class StaffService {
   ];
 
   static const List<String> skills = [
+    'Diabetic care',
+    'Injections',
+    'Post-surgery care',
+    'Catheter management',
     'Elder care',
     'Dementia / Alzheimer’s care',
     'Bedridden care',
@@ -68,7 +72,6 @@ class StaffService {
     'Catheter care',
     'Ryles tube care',
     'Vital monitoring',
-    'Post-surgery care',
     'Stroke & paralysis care',
     'Cancer & palliative care',
     'Parkinson’s care',
@@ -80,8 +83,8 @@ class StaffService {
   ];
 
   static const List<String> languages = [
-    'Hindi',
     'English',
+    'Hindi',
     'Marathi',
     'Gujarati',
     'Bengali',
@@ -92,10 +95,22 @@ class StaffService {
     'Punjabi',
   ];
 
+  static const List<Map<String, String>> availabilityOptions = [
+    {'id': 'morning', 'label': 'Morning'},
+    {'id': 'day', 'label': 'Day visits'},
+    {'id': 'evening', 'label': 'Evening'},
+    {'id': 'night', 'label': 'Night'},
+    {'id': '12_hour', 'label': '12-hr shifts'},
+    {'id': '24_hour', 'label': '24-hr live-in'},
+  ];
+
   static const List<String> availabilities = [
-    'Day visits',
-    '12-hr shifts',
-    '24-hr live-in',
+    'morning',
+    'night',
+    '24_hour',
+    'day',
+    'evening',
+    '12_hour',
   ];
 
   static const List<Map<String, dynamic>> requiredDocs = [
@@ -188,7 +203,6 @@ class StaffService {
 
   // ── Seed Demo Applications ─────────────────────────────────────────
   List<StaffModel> _defaultApplications() {
-    final now = DateTime.now().millisecondsSinceEpoch;
     return [
       StaffModel(
         id: 'app1',

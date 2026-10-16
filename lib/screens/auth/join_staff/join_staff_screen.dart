@@ -1,29 +1,14 @@
-import 'package:eldoriaCare/screens/auth/join_staff/controller.dart';
+import 'package:eldoriaCare/utils/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
-import 'package:eldoriaCare/values/size_config.dart';
-import 'package:eldoriaCare/values/theme_colors.dart';
+import 'package:eldoriaCare/screens/auth/join_staff/controller.dart';
 import 'package:eldoriaCare/widget/my_button.dart';
+import 'package:eldoriaCare/utils/toasty.dart';
 
 class JoinStaffScreen extends StatelessWidget {
   JoinStaffScreen({super.key});
-
-  static const List<String> stepTitles = [
-    'Your details',
-    'Work profile',
-    'Documents',
-    'Review & submit',
-  ];
-
-  static const Color bgColor = ThemeColors.appBackgroundDeep;
-  static const Color cardColor = ThemeColors.cardSurface;
-  static const Color cardBorderColor = ThemeColors.cardBorder;
-  static const Color inputBgColor = ThemeColors.inputBg;
-  static const Color inputBorderColor = ThemeColors.lineBorder;
-  static const Color textMutedColor = ThemeColors.textMuted;
-  static const Color textLabelColor = ThemeColors.textSlateMuted;
 
   final c = Get.put(JoiningController());
 
@@ -33,21 +18,22 @@ class JoinStaffScreen extends StatelessWidget {
     final c = Get.put(JoiningController());
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: ThemeColors.appBackgroundDeep,
       appBar: _buildAppBar(),
       body: SafeArea(
         child: Column(
           children: [
-            // ── Step Progress Indicator ─────────────────────────
             _buildProgressBar(),
 
-            // ── Step Content Form ───────────────────────────────
+
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.symmetric(horizontal: 4.8.w, vertical: 2.h),
                 child: Obx(() {
                   switch (c.currentStep.value) {
+                    case 0:
+                      return _buildStep0PhoneVerification(context);
                     case 1:
                       return _buildStep1YourDetails(context);
                     case 2:
@@ -63,8 +49,12 @@ class JoinStaffScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Sticky Bottom Navigation Bar ────────────────────
-            _buildBottomBar(),
+            // ── Sticky Bottom Navigation Bar (Steps 1 to 4) ─────
+            Obx(
+              () => c.currentStep.value == 0
+                  ? const SizedBox.shrink()
+                  : _buildBottomBar(),
+            ),
           ],
         ),
       ),
@@ -84,12 +74,38 @@ class JoinStaffScreen extends StatelessWidget {
         ),
         onPressed: c.prevStep,
       ),
-      title: Obx(
-        () => Column(
+      title: Obx(() {
+        if (c.currentStep.value == 0) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Join Eldoria',
+                style: TextStyle(
+                  color: ThemeColors.textWhite,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18.sp,
+                ),
+              ),
+              Text(
+                'Phone verification',
+                style: TextStyle(
+                  color: ThemeColors.textFaint,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              c.editingId != null ? 'Update application' : 'Join Eldoria',
+              c.editingId != null && c.editingId!.isNotEmpty
+                  ? 'Update application'
+                  : 'Join Eldoria',
               style: TextStyle(
                 color: ThemeColors.textWhite,
                 fontWeight: FontWeight.w800,
@@ -97,7 +113,7 @@ class JoinStaffScreen extends StatelessWidget {
               ),
             ),
             Text(
-              'Step ${c.currentStep.value} of 4 · ${stepTitles[c.currentStep.value - 1]}',
+              'Step ${c.currentStep.value} of 4 · ${c.stepTitles[c.currentStep.value - 1]}',
               style: TextStyle(
                 color: ThemeColors.textFaint,
                 fontSize: 12.sp,
@@ -105,19 +121,23 @@ class JoinStaffScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 
   // ── Step Progress Indicator ─────────────────────────────────────────
   Widget _buildProgressBar() {
-    return Obx(
-      () => Container(
+    return Obx(() {
+      if (c.currentStep.value == 0) {
+        return const SizedBox.shrink();
+      }
+
+      return Container(
         color: ThemeColors.sceneDarkNavy,
-        padding: EdgeInsets.fromLTRB(2, .4.h, 2, 0),
+        padding: EdgeInsets.fromLTRB(4.8.w, 0.4.h, 4.8.w, 1.4.h),
         child: Row(
-          children: List.generate(stepTitles.length, (index) {
+          children: List.generate(c.stepTitles.length, (index) {
             final isActive = index < c.currentStep.value;
             return Expanded(
               child: AnimatedContainer(
@@ -142,30 +162,274 @@ class JoinStaffScreen extends StatelessWidget {
             );
           }),
         ),
-      ),
+      );
+    });
+  }
+
+  // ── Step 0: Phone Verification (First Step) ─────────────────────────
+  Widget _buildStep0PhoneVerification(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        1.h.vs,
+        Container(
+          padding: EdgeInsets.all(4.8.w),
+          decoration: BoxDecoration(
+            color: ThemeColors.cardSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: ThemeColors.cardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 13.w,
+                height: 13.w,
+                decoration: BoxDecoration(
+                  color: ThemeColors.glowAmberCard,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: ThemeColors.goldenAmber.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Icon(
+                  Icons.phone_android_rounded,
+                  color: ThemeColors.goldenAmber,
+                  size: 22.sp,
+                ),
+              ),
+              2.h.vs,
+              Text(
+                'Verify your mobile number',
+                style: TextStyle(
+                  color: ThemeColors.textWhite,
+                  fontSize: 17.5.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              0.8.h.vs,
+              Text(
+                'Enter your 10-digit mobile number. We will send an OTP to verify your identity before starting your onboarding application.',
+                style: TextStyle(
+                  color: ThemeColors.textMuted,
+                  fontSize: 13.sp,
+                  height: 1.35,
+                ),
+              ),
+              2.2.h.vs,
+
+              // Mobile Input Field
+              _buildLabel('Mobile number'),
+              6.vs,
+              Container(
+                decoration: BoxDecoration(
+                  color: ThemeColors.inputBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: ThemeColors.lineBorder),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 3.6.w,
+                        vertical: 1.6.h,
+                      ),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          right: BorderSide(color: ThemeColors.lineBorder),
+                        ),
+                      ),
+                      child: Text(
+                        '+91',
+                        style: TextStyle(
+                          color: ThemeColors.textWhite,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15.sp,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: c.phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        enabled: !c.isOtpSent.value,
+                        style: TextStyle(
+                          color: ThemeColors.textWhite,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '98765 43210',
+                          hintStyle: TextStyle(
+                            color: ThemeColors.textPlaceholder,
+                            fontSize: 14.sp,
+                          ),
+                          counterText: '',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 3.6.w,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (c.isOtpSent.value)
+                      IconButton(
+                        tooltip: 'Edit number',
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: ThemeColors.goldenAmber,
+                          size: 20,
+                        ),
+                        onPressed: c.changeNumber,
+                      ),
+                  ],
+                ),
+              ),
+
+              // If OTP not yet sent
+              if (!c.isOtpSent.value) ...[
+                2.2.h.vs,
+                MyButton(
+                  label: 'Send OTP',
+                  isLoading: c.isSendingOtp.value,
+                  color: ThemeColors.goldenAmber,
+                  onPressed: c.sendOtp,
+                ),
+              ],
+
+              // If OTP is sent
+              if (c.isOtpSent.value) ...[
+                2.h.vs,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildLabel('Enter 6-digit OTP'),
+                    TextButton(
+                      onPressed: c.changeNumber,
+                      child: Text(
+                        'Change number',
+                        style: TextStyle(
+                          color: ThemeColors.goldenAmber,
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                6.vs,
+                TextField(
+                  controller: c.otpCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ThemeColors.textWhite,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '• • • • • •',
+                    hintStyle: TextStyle(
+                      color: ThemeColors.textPlaceholder,
+                      letterSpacing: 4,
+                      fontSize: 16.sp,
+                    ),
+                    filled: true,
+                    fillColor: ThemeColors.inputBg,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 3.6.w,
+                      vertical: 1.5.h,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ThemeColors.lineBorder,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ThemeColors.lineBorder,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ThemeColors.goldenAmber,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                1.5.h.vs,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Didn\'t receive OTP?',
+                      style: TextStyle(
+                        color: ThemeColors.textMuted,
+                        fontSize: 12.5.sp,
+                      ),
+                    ),
+                    Obx(
+                      () => TextButton(
+                        onPressed: c.otpCountdown.value == 0 ? c.sendOtp : null,
+                        child: Text(
+                          c.otpCountdown.value > 0
+                              ? 'Resend in ${c.otpCountdown.value}s'
+                              : 'Resend OTP',
+                          style: TextStyle(
+                            color: c.otpCountdown.value == 0
+                                ? ThemeColors.goldenAmber
+                                : ThemeColors.textMuted,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                1.5.h.vs,
+                MyButton(
+                  label: 'Verify & Continue',
+                  isLoading: c.isVerifyingOtp.value,
+                  color: ThemeColors.goldenAmber,
+                  onPressed: c.verifyOtp,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  // ── Step 1: Your Details ────────────────────────────────────────────
+  // ── Step 1: Your Details (User Details) ──────────────────────────────
   Widget _buildStep1YourDetails(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Full Name
         _buildTextField(
           controller: c.nameCtrl,
           label: 'Full name (as on ID)',
-          hintText: 'e.g. Sunita Ramesh Patil',
+          hintText: 'e.g. Prerna Pandey',
         ),
         14.vs,
 
-        // Mobile Phone with +91 Prefix
+        // Verified Read-Only Mobile Number Field
         _buildLabel('Mobile number'),
         6.vs,
         Container(
           decoration: BoxDecoration(
-            color: inputBgColor,
+            color: ThemeColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: inputBorderColor),
+            border: Border.all(color: ThemeColors.cardBorder),
           ),
           child: Row(
             children: [
@@ -175,12 +439,14 @@ class JoinStaffScreen extends StatelessWidget {
                   vertical: 1.6.h,
                 ),
                 decoration: const BoxDecoration(
-                  border: Border(right: BorderSide(color: inputBorderColor)),
+                  border: Border(
+                    right: BorderSide(color: ThemeColors.lineBorder),
+                  ),
                 ),
                 child: Text(
                   '+91',
                   style: TextStyle(
-                    color: ThemeColors.textWhite,
+                    color: ThemeColors.textMuted,
                     fontWeight: FontWeight.w700,
                     fontSize: 15.sp,
                   ),
@@ -189,8 +455,8 @@ class JoinStaffScreen extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: c.phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
+                  readOnly: true,
+                  enableInteractiveSelection: false,
                   style: TextStyle(
                     color: ThemeColors.textWhite,
                     fontSize: 15.sp,
@@ -208,7 +474,51 @@ class JoinStaffScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              Container(
+                margin: EdgeInsets.only(right: 3.w),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 2.4.w,
+                  vertical: 0.5.h,
+                ),
+                decoration: BoxDecoration(
+                  color: ThemeColors.successGreenBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: ThemeColors.successGreenBorder.withValues(
+                      alpha: 0.5,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.verified_rounded,
+                      color: ThemeColors.successGreen,
+                      size: 14.sp,
+                    ),
+                    4.hs,
+                    Text(
+                      'Verified',
+                      style: TextStyle(
+                        color: ThemeColors.successGreen,
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
+          ),
+        ),
+        6.vs,
+        Text(
+          '✓ Mobile number verified via OTP · Locked for this account',
+          style: TextStyle(
+            color: ThemeColors.successGreen,
+            fontSize: 11.5.sp,
+            fontWeight: FontWeight.w500,
           ),
         ),
         14.vs,
@@ -216,7 +526,7 @@ class JoinStaffScreen extends StatelessWidget {
         _buildTextField(
           controller: c.emailCtrl,
           label: 'Email (optional)',
-          hintText: 'e.g. sunita@example.com',
+          hintText: 'e.g. prerna.pandey@gmail.com',
           keyboardType: TextInputType.emailAddress,
         ),
         14.vs,
@@ -237,7 +547,7 @@ class JoinStaffScreen extends StatelessWidget {
                       final picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now().subtract(
-                          const Duration(days: 365 * 25),
+                          const Duration(days: 365 * 24),
                         ),
                         firstDate: DateTime(1950),
                         lastDate: DateTime.now().subtract(
@@ -257,9 +567,9 @@ class JoinStaffScreen extends StatelessWidget {
                         vertical: 1.6.h,
                       ),
                       decoration: BoxDecoration(
-                        color: inputBgColor,
+                        color: ThemeColors.inputBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: inputBorderColor),
+                        border: Border.all(color: ThemeColors.lineBorder),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -281,7 +591,7 @@ class JoinStaffScreen extends StatelessWidget {
                           Icon(
                             Icons.calendar_today_rounded,
                             size: 16.sp,
-                            color: textMutedColor,
+                            color: ThemeColors.textMuted,
                           ),
                         ],
                       ),
@@ -303,14 +613,14 @@ class JoinStaffScreen extends StatelessWidget {
                     () => Container(
                       padding: EdgeInsets.symmetric(horizontal: 3.2.w),
                       decoration: BoxDecoration(
-                        color: inputBgColor,
+                        color: ThemeColors.inputBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: inputBorderColor),
+                        border: Border.all(color: ThemeColors.lineBorder),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: c.selectedGender.value,
-                          dropdownColor: cardColor,
+                          dropdownColor: ThemeColors.cardSurface,
                           hint: Text(
                             'Select',
                             style: TextStyle(
@@ -323,10 +633,23 @@ class JoinStaffScreen extends StatelessWidget {
                             color: ThemeColors.textWhite,
                             fontSize: 14.sp,
                           ),
-                          items: ['Female', 'Male', 'Other'].map((g) {
-                            return DropdownMenuItem(value: g, child: Text(g));
-                          }).toList(),
-                          onChanged: (val) => c.selectedGender.value = val,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'female',
+                              child: Text('Female'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'male',
+                              child: Text('Male'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'other',
+                              child: Text('Other'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) c.selectedGender.value = val;
+                          },
                         ),
                       ),
                     ),
@@ -352,23 +675,24 @@ class JoinStaffScreen extends StatelessWidget {
                     () => Container(
                       padding: EdgeInsets.symmetric(horizontal: 3.2.w),
                       decoration: BoxDecoration(
-                        color: inputBgColor,
+                        color: ThemeColors.inputBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: inputBorderColor),
+                        border: Border.all(color: ThemeColors.lineBorder),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: c.selectedCity.value,
-                          dropdownColor: cardColor,
+                          dropdownColor: ThemeColors.cardSurface,
                           isExpanded: true,
                           style: TextStyle(
                             color: ThemeColors.textWhite,
                             fontSize: 14.sp,
                           ),
                           items: StaffService.defaultCities.map((city) {
+                            final cityName = city['name'] ?? '';
                             return DropdownMenuItem(
-                              value: city['id'],
-                              child: Text(city['name'] ?? ''),
+                              value: cityName,
+                              child: Text(cityName),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -386,7 +710,7 @@ class JoinStaffScreen extends StatelessWidget {
               child: _buildTextField(
                 controller: c.areaCtrl,
                 label: 'Area / locality',
-                hintText: 'e.g. Andheri West',
+                hintText: 'e.g. Kandivali East, Kandivali West',
               ),
             ),
           ],
@@ -397,7 +721,8 @@ class JoinStaffScreen extends StatelessWidget {
         _buildTextField(
           controller: c.addressCtrl,
           label: 'Full address',
-          hintText: 'Flat / house no., building name, street, pincode',
+          hintText:
+              'Flat 402, Gundecha Greens, Thakur Village Road, Next to NG Suncity...',
           maxLines: 3,
         ),
       ],
@@ -423,16 +748,18 @@ class JoinStaffScreen extends StatelessWidget {
                 selected: isSel,
                 onSelected: (_) => c.selectedRole.value = r,
                 selectedColor: ThemeColors.chipSelectedBg,
-                backgroundColor: cardColor,
+                backgroundColor: ThemeColors.cardSurface,
                 labelStyle: TextStyle(
-                  color: isSel ? ThemeColors.textWhite : textMutedColor,
+                  color: isSel ? ThemeColors.textWhite : ThemeColors.textMuted,
                   fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
                   fontSize: 13.sp,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: isSel ? ThemeColors.goldenAmber : cardBorderColor,
+                    color: isSel
+                        ? ThemeColors.goldenAmber
+                        : ThemeColors.cardBorder,
                     width: isSel ? 1.5 : 1.0,
                   ),
                 ),
@@ -445,7 +772,7 @@ class JoinStaffScreen extends StatelessWidget {
         _buildTextField(
           controller: c.qualificationCtrl,
           label: 'Highest qualification',
-          hintText: 'e.g. GNM Nursing, 2019',
+          hintText: 'e.g. GNM Nurse',
         ),
         14.vs,
 
@@ -455,16 +782,16 @@ class JoinStaffScreen extends StatelessWidget {
               child: _buildTextField(
                 controller: c.regNoCtrl,
                 label: 'Council reg. no. (if any)',
-                hintText: 'e.g. MNC-204511',
+                hintText: 'e.g. MNC-2018-847292',
               ),
             ),
             12.hs,
             Expanded(
               child: _buildTextField(
                 controller: c.experienceCtrl,
-                label: 'Experience (years)',
-                hintText: 'e.g. 5',
-                keyboardType: TextInputType.number,
+                label: 'Experience',
+                hintText: 'e.g. 4 years in ICU and Elder Care',
+                keyboardType: TextInputType.text,
               ),
             ),
           ],
@@ -492,16 +819,18 @@ class JoinStaffScreen extends StatelessWidget {
                 },
                 selectedColor: ThemeColors.chipSelectedBg,
                 checkmarkColor: ThemeColors.goldenAmber,
-                backgroundColor: cardColor,
+                backgroundColor: ThemeColors.cardSurface,
                 labelStyle: TextStyle(
-                  color: isSel ? ThemeColors.textWhite : textMutedColor,
+                  color: isSel ? ThemeColors.textWhite : ThemeColors.textMuted,
                   fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 12.5.sp,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: isSel ? ThemeColors.goldenAmber : cardBorderColor,
+                    color: isSel
+                        ? ThemeColors.goldenAmber
+                        : ThemeColors.cardBorder,
                   ),
                 ),
               );
@@ -531,16 +860,18 @@ class JoinStaffScreen extends StatelessWidget {
                 },
                 selectedColor: ThemeColors.chipSelectedBg,
                 checkmarkColor: ThemeColors.goldenAmber,
-                backgroundColor: cardColor,
+                backgroundColor: ThemeColors.cardSurface,
                 labelStyle: TextStyle(
-                  color: isSel ? ThemeColors.textWhite : textMutedColor,
+                  color: isSel ? ThemeColors.textWhite : ThemeColors.textMuted,
                   fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 12.5.sp,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: isSel ? ThemeColors.goldenAmber : cardBorderColor,
+                    color: isSel
+                        ? ThemeColors.goldenAmber
+                        : ThemeColors.cardBorder,
                   ),
                 ),
               );
@@ -556,30 +887,34 @@ class JoinStaffScreen extends StatelessWidget {
           () => Wrap(
             spacing: 2.w,
             runSpacing: 1.h,
-            children: StaffService.availabilities.map((avail) {
-              final isSel = c.selectedAvailability.contains(avail);
+            children: StaffService.availabilityOptions.map((opt) {
+              final optId = opt['id']!;
+              final optLabel = opt['label']!;
+              final isSel = c.selectedAvailability.contains(optId);
               return FilterChip(
-                label: Text(avail),
+                label: Text(optLabel),
                 selected: isSel,
                 onSelected: (selected) {
                   if (selected) {
-                    c.selectedAvailability.add(avail);
+                    c.selectedAvailability.add(optId);
                   } else {
-                    c.selectedAvailability.remove(avail);
+                    c.selectedAvailability.remove(optId);
                   }
                 },
                 selectedColor: ThemeColors.chipSelectedBg,
                 checkmarkColor: ThemeColors.goldenAmber,
-                backgroundColor: cardColor,
+                backgroundColor: ThemeColors.cardSurface,
                 labelStyle: TextStyle(
-                  color: isSel ? ThemeColors.textWhite : textMutedColor,
+                  color: isSel ? ThemeColors.textWhite : ThemeColors.textMuted,
                   fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 12.5.sp,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: isSel ? ThemeColors.goldenAmber : cardBorderColor,
+                    color: isSel
+                        ? ThemeColors.goldenAmber
+                        : ThemeColors.cardBorder,
                   ),
                 ),
               );
@@ -592,9 +927,9 @@ class JoinStaffScreen extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(3.6.w),
           decoration: BoxDecoration(
-            color: cardColor,
+            color: ThemeColors.cardSurface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorderColor),
+            border: Border.all(color: ThemeColors.cardBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -611,7 +946,7 @@ class JoinStaffScreen extends StatelessWidget {
               _buildTextField(
                 controller: c.emNameCtrl,
                 label: 'Name',
-                hintText: 'e.g. Ramesh Patil',
+                hintText: 'e.g. Anshika Patil',
               ),
               10.vs,
               Row(
@@ -620,7 +955,7 @@ class JoinStaffScreen extends StatelessWidget {
                     child: _buildTextField(
                       controller: c.emPhoneCtrl,
                       label: 'Mobile',
-                      hintText: '10-digit number',
+                      hintText: 'e.g. 9876543299',
                       keyboardType: TextInputType.phone,
                     ),
                   ),
@@ -629,13 +964,22 @@ class JoinStaffScreen extends StatelessWidget {
                     child: _buildTextField(
                       controller: c.emRelationCtrl,
                       label: 'Relation',
-                      hintText: 'e.g. Brother, Husband',
+                      hintText: 'e.g. Frient, Sister, Husband',
                     ),
                   ),
                 ],
               ),
             ],
           ),
+        ),
+        16.vs,
+
+        // Notes & Preferences
+        _buildTextField(
+          controller: c.notesCtrl,
+          label: 'Notes & preferences (optional)',
+          hintText: 'e.g. Preferred location: Western suburbs',
+          maxLines: 2,
         ),
       ],
     );
@@ -651,22 +995,22 @@ class JoinStaffScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: ThemeColors.infoBoxBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorderColor),
+            border: Border.all(color: ThemeColors.cardBorder),
           ),
           child: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.privacy_tip_outlined,
                 color: ThemeColors.goldenAmber,
-                size: 20.sp,
+                size: 20,
               ),
               10.hs,
               Expanded(
                 child: Text(
-                  'Upload a clear photo or PDF of each document. Documents are encrypted and visible only to the Eldoria Care Desk.',
+                  'Your documents are encrypted and only accessible to the Eldoria clinical review team for verification.',
                   style: TextStyle(
                     fontSize: 12.5.sp,
-                    color: textMutedColor,
+                    color: ThemeColors.textLight,
                     height: 1.3,
                   ),
                 ),
@@ -676,7 +1020,6 @@ class JoinStaffScreen extends StatelessWidget {
         ),
         16.vs,
 
-        // Document Upload Tiles
         ...StaffService.requiredDocs.map((docDef) {
           final key = docDef['key'] as String;
           final label = docDef['label'] as String;
@@ -685,78 +1028,70 @@ class JoinStaffScreen extends StatelessWidget {
 
           return Obx(() {
             final isUploaded = c.uploadedDocs.containsKey(key);
-            final isUploading = c.uploadingKeys[key] == true;
             final uploadedData = c.uploadedDocs[key];
 
             return Container(
               margin: EdgeInsets.only(bottom: 1.5.h),
-              padding: EdgeInsets.all(3.2.w),
+              padding: EdgeInsets.all(3.6.w),
               decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(16),
+                color: ThemeColors.cardSurface,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isUploaded
                       ? ThemeColors.successGreenBorder
-                      : cardBorderColor,
+                      : ThemeColors.cardBorder,
                   width: isUploaded ? 1.5 : 1.0,
                 ),
               ),
               child: Row(
                 children: [
-                  // Icon / Thumbnail preview
                   Container(
-                    width: 13.w,
-                    height: 13.w,
+                    width: 10.w,
+                    height: 10.w,
                     decoration: BoxDecoration(
                       color: isUploaded
                           ? ThemeColors.successGreenBg
-                          : ThemeColors.inputBg,
-                      borderRadius: BorderRadius.circular(12),
+                          : ThemeColors.surface2,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: isUploading
-                        ? Center(
-                            child: SizedBox(
-                              width: 5.w,
-                              height: 5.w,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: ThemeColors.goldenAmber,
-                              ),
-                            ),
-                          )
-                        : Icon(
-                            isUploaded
-                                ? Icons.check_circle_rounded
-                                : Icons.description_outlined,
-                            color: isUploaded
-                                ? ThemeColors.successGreen
-                                : textMutedColor,
-                            size: 26.sp,
-                          ),
+                    child: Icon(
+                      isUploaded
+                          ? Icons.check_circle_rounded
+                          : (key == 'photo'
+                                ? Icons.account_circle_rounded
+                                : Icons.description_rounded),
+                      color: isUploaded
+                          ? ThemeColors.successGreen
+                          : ThemeColors.goldenAmber,
+                      size: 20.sp,
+                    ),
                   ),
                   12.hs,
 
-                  // Label & Hint
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Text(
-                              label,
-                              style: TextStyle(
-                                color: ThemeColors.textWhite,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14.sp,
+                            Flexible(
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  color: ThemeColors.textWhite,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             6.hs,
                             if (isReq)
                               Container(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: 1.6.w,
-                                  vertical: 0.3.h,
+                                  horizontal: 1.8.w,
+                                  vertical: 0.2.h,
                                 ),
                                 decoration: BoxDecoration(
                                   color: ThemeColors.goldenAmberBg,
@@ -776,7 +1111,7 @@ class JoinStaffScreen extends StatelessWidget {
                                 'Optional',
                                 style: TextStyle(
                                   fontSize: 11.sp,
-                                  color: textMutedColor,
+                                  color: ThemeColors.textMuted,
                                 ),
                               ),
                           ],
@@ -790,7 +1125,7 @@ class JoinStaffScreen extends StatelessWidget {
                             fontSize: 12.sp,
                             color: isUploaded
                                 ? ThemeColors.successGreen
-                                : textMutedColor,
+                                : ThemeColors.textMuted,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -810,7 +1145,7 @@ class JoinStaffScreen extends StatelessWidget {
                       ),
                       side: BorderSide(
                         color: isUploaded
-                            ? cardBorderColor
+                            ? ThemeColors.cardBorder
                             : ThemeColors.goldenAmber,
                       ),
                       shape: RoundedRectangleBorder(
@@ -823,7 +1158,7 @@ class JoinStaffScreen extends StatelessWidget {
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w700,
                         color: isUploaded
-                            ? textMutedColor
+                            ? ThemeColors.textMuted
                             : ThemeColors.goldenAmber,
                       ),
                     ),
@@ -846,9 +1181,9 @@ class JoinStaffScreen extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(4.w),
           decoration: BoxDecoration(
-            color: cardColor,
+            color: ThemeColors.cardSurface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorderColor),
+            border: Border.all(color: ThemeColors.cardBorder),
           ),
           child: Column(
             children: [
@@ -858,15 +1193,16 @@ class JoinStaffScreen extends StatelessWidget {
                 _buildReviewRow('Email', c.emailCtrl.text),
               _buildReviewRow(
                 'Age & Gender',
-                '${c.calculatedAge} yrs · ${c.selectedGender.value ?? ''}',
+                '${c.calculatedAge} yrs · ${c.selectedGender.value.capitalizeFirst}',
               ),
               _buildReviewRow(
-                'Location',
-                '${c.areaCtrl.text}, ${c.selectedCity.value.capitalizeFirst}',
+                'City & Area',
+                '${c.selectedCity.value} · ${c.areaCtrl.text}',
               ),
+              _buildReviewRow('Address', c.addressCtrl.text),
               _buildReviewRow(
-                'Role',
-                '${c.selectedRole.value} · ${c.experienceCtrl.text} yrs exp',
+                'Role & Exp.',
+                '${c.selectedRole.value} · ${c.experienceCtrl.text}',
               ),
               _buildReviewRow(
                 'Qualification',
@@ -879,6 +1215,9 @@ class JoinStaffScreen extends StatelessWidget {
                 'Emergency',
                 '${c.emNameCtrl.text} (${c.emRelationCtrl.text}) · +91 ${c.emPhoneCtrl.text}',
               ),
+              if (c.notesCtrl.text.isNotEmpty)
+                _buildReviewRow('Notes', c.notesCtrl.text),
+              _buildReviewRow('Token', c.verificationToken.value),
             ],
           ),
         ),
@@ -888,9 +1227,9 @@ class JoinStaffScreen extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(3.6.w),
           decoration: BoxDecoration(
-            color: cardColor,
+            color: ThemeColors.cardSurface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorderColor),
+            border: Border.all(color: ThemeColors.cardBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1000,7 +1339,7 @@ class JoinStaffScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12.5.sp,
                 fontWeight: FontWeight.w600,
-                color: textLabelColor,
+                color: ThemeColors.textSlateMuted,
               ),
             ),
           ),
@@ -1008,9 +1347,9 @@ class JoinStaffScreen extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                color: ThemeColors.textWhite,
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
+                color: ThemeColors.textWhite,
               ),
             ),
           ),
@@ -1025,7 +1364,7 @@ class JoinStaffScreen extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 4.8.w, vertical: 1.5.h),
       decoration: const BoxDecoration(
         color: ThemeColors.sceneDarkNavy,
-        border: Border(top: BorderSide(color: cardBorderColor)),
+        border: Border(top: BorderSide(color: ThemeColors.cardBorder)),
       ),
       child: Obx(
         () => Row(
@@ -1057,7 +1396,7 @@ class JoinStaffScreen extends StatelessWidget {
             Expanded(
               child: MyButton(
                 label: c.currentStep.value == 4
-                    ? (c.editingId != null
+                    ? (c.editingId != null && c.editingId!.isNotEmpty
                           ? 'Resubmit application'
                           : 'Submit application')
                     : 'Continue',
@@ -1110,18 +1449,18 @@ class JoinStaffScreen extends StatelessWidget {
               fontSize: 13.5.sp,
             ),
             filled: true,
-            fillColor: inputBgColor,
+            fillColor: ThemeColors.inputBg,
             contentPadding: EdgeInsets.symmetric(
               horizontal: 3.6.w,
               vertical: 1.5.h,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: inputBorderColor),
+              borderSide: const BorderSide(color: ThemeColors.lineBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: inputBorderColor),
+              borderSide: const BorderSide(color: ThemeColors.lineBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

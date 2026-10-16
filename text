@@ -90,3 +90,12 @@ CURRENT STATUS & NEXT STEPS
 The Staff Dashboard and all its sub-screens are ready for review and device testing.
 All navigation paths, interactive controls, and visual elements match the reference specifications.
 ================================================================================
+
+
+
+ Eldoria Care – Staff Update
+1. Separated business logic and API handling into a dedicated controller for better code organization and maintainability.
+2. Designed and implemented a rounded, pill-style segmented progress bar with animated gradients for active steps.
+3. Aligned onboarding fields, shift availability options, and notes with the backend registration payload.
+4. Integrated the staff registration API and added the purpose parameter to OTP authentication requests.
+5. Implemented Send OTP and Verify OTP API integration, including handling and storing user data in the local database.

@@ -46,6 +46,10 @@ class Repository extends ApiProvider {
     }
   }
 
+  Future<dynamic> registerStaff(Map<String, dynamic> payload) async {
+    return super.postJson('staff/register', parameters: payload);
+  }
+
   Future<dynamic> login(String email, String password) async {
     return super.postJson(
       'auth/login',
@@ -53,17 +57,17 @@ class Repository extends ApiProvider {
     );
   }
 
-  Future<dynamic> sendOtp(String number) async {
+  Future<dynamic> sendOtp(String number, String purpose) async {
     return super.postJson(
       'auth/staff/send-otp',
-      parameters: {'phone': number},
+      parameters: {'phone': number, 'purpose': purpose},
     );
   }
 
-  Future<dynamic> verifyOtp(String phone, String otp) async {
+  Future<dynamic> verifyOtp(String phone, String otp, String purpose) async {
     return super.postJson(
       'auth/staff/verify-otp',
-      parameters: {'phone': phone, 'otp': otp},
+      parameters: {'phone': phone, 'otp': otp, 'purpose': purpose},
     );
   }
 

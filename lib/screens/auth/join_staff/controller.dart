@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'package:eldoriaCare/data_handler/repository.dart';
+import 'package:eldoriaCare/utils/helper.dart';
+import 'package:eldoriaCare/utils/logger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -10,29 +15,39 @@ import 'package:eldoriaCare/utils/toasty.dart';
 class JoiningController extends GetxController {
   static JoiningController get to => Get.find();
 
-  final staffService = StaffService.instance;
   final picker = ImagePicker();
 
   // ── Step State ─────────────────────────────────────────────
-  final currentStep = 1.obs;
+  // Step 0: Phone Verification, Step 1: Your details, Step 2: Work profile, Step 3: Documents, Step 4: Review
+  final currentStep = 0.obs;
   final isSubmitting = false.obs;
-  final errorMessage = ''.obs;
+  final isSendingOtp = false.obs;
+  final isVerifyingOtp = false.obs;
+  final isOtpSent = false.obs;
+  final isOtpVerified = false.obs;
+  final otpCountdown = 0.obs;
+  Timer? _resendTimer;
 
-  // ── Application ID (if editing existing application) ──────
   String? editingId;
+
+  // ── Verification Token ─────────────────────────────────────
+  final verificationToken = ''.obs;
+
+  // ── OTP Controllers ────────────────────────────────
+  final otpCtrl = TextEditingController();
 
   // ── Step 1 Form Controllers ────────────────────────────────
   final nameCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final dobCtrl = TextEditingController();
-  final selectedGender = RxnString();
-  final selectedCity = 'mumbai'.obs;
+  final selectedGender = 'female'.obs;
+  final selectedCity = 'Mumbai'.obs;
   final areaCtrl = TextEditingController();
   final addressCtrl = TextEditingController();
 
   // ── Step 2 Form Controllers ────────────────────────────────
-  final selectedRole = RxnString();
+  final selectedRole = RxnString('GNM Nurse');
   final qualificationCtrl = TextEditingController();
   final regNoCtrl = TextEditingController();
   final experienceCtrl = TextEditingController();
@@ -44,27 +59,36 @@ class JoiningController extends GetxController {
   final emPhoneCtrl = TextEditingController();
   final emRelationCtrl = TextEditingController();
 
+  // ── Notes & Preferences ────────────────────────────────────
+  final notesCtrl = TextEditingController();
+
   // ── Step 3 Documents ───────────────────────────────────────
-  // Map of docKey -> Map with {'name': String, 'size': int, 'path': String}
   final uploadedDocs = <String, Map<String, dynamic>>{}.obs;
   final uploadingKeys = <String, bool>{}.obs;
 
   // ── Step 4 Declaration ─────────────────────────────────────
   final declarationAgreed = false.obs;
 
+  final List<String> stepTitles = [
+    'Your details',
+    'Work profile',
+    'Documents',
+    'Review & submit',
+  ];
+
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments;
-    if (args is Map && args['application'] is StaffModel) {
-      loadFromApplication(args['application'] as StaffModel);
-    } else if (args is Map && args['editId'] != null) {
-      _loadById(args['editId'].toString());
+    if (Helper.isTester) {
+      phoneCtrl.text = '8126552280';
+      loadTestData();
     }
   }
 
   @override
   void onClose() {
+    _resendTimer?.cancel();
+    otpCtrl.dispose();
     nameCtrl.dispose();
     phoneCtrl.dispose();
     emailCtrl.dispose();
@@ -77,45 +101,60 @@ class JoiningController extends GetxController {
     emNameCtrl.dispose();
     emPhoneCtrl.dispose();
     emRelationCtrl.dispose();
+    notesCtrl.dispose();
     super.onClose();
   }
 
-  Future<void> _loadById(String id) async {
-    final app = await staffService.getApplicationById(id);
-    if (app != null) {
-      loadFromApplication(app);
-    }
-  }
+  void loadTestData() {
+    editingId = '';
+    isOtpVerified.value = true;
+    nameCtrl.text = 'Ajay Rawat';
+    emailCtrl.text = 'ajay.rawat@gmail.com';
+    phoneCtrl.text = '8126552280';
+    dobCtrl.text = '2002-06-15';
+    selectedGender.value = 'male';
+    selectedCity.value = 'Mumbai';
+    areaCtrl.text = 'Kandivali East, Kandivali West';
+    addressCtrl.text = 'Flat 402, Gundecha Greens, Mumbai, Maharashtra';
 
-  void loadFromApplication(StaffModel app) {
-    editingId = app.id;
-    nameCtrl.text = app.name;
-    phoneCtrl.text = app.phone.replaceAll(RegExp(r'\D'), '');
-    emailCtrl.text = app.email ?? '';
-    dobCtrl.text = app.dob ?? '';
-    selectedGender.value = app.gender;
-    selectedCity.value = app.city;
-    areaCtrl.text = app.area ?? '';
-    addressCtrl.text = app.address ?? '';
+    selectedRole.value = 'GNM Nurse';
+    qualificationCtrl.text = 'GNM Nurse';
+    regNoCtrl.text = 'MNC-2018-847292';
+    experienceCtrl.text = '4 years in ICU and Elder Care';
+    selectedSkills.assignAll([
+      'Diabetic care',
+      'Injections',
+      'Post-surgery care',
+      'Catheter management',
+    ]);
+    selectedLanguages.assignAll(['English', 'Hindi', 'Marathi']);
+    selectedAvailability.assignAll(['morning', 'night', '24_hour']);
 
-    selectedRole.value = app.role;
-    qualificationCtrl.text = app.qualification ?? '';
-    regNoCtrl.text = app.regNo ?? '';
-    experienceCtrl.text = app.experience?.toString() ?? '';
-    selectedSkills.assignAll(app.skills);
-    selectedLanguages.assignAll(app.languages);
-    selectedAvailability.assignAll(app.availability);
+    emNameCtrl.text = 'Anshika Patil';
+    emPhoneCtrl.text = '9876543299';
+    emRelationCtrl.text = 'Friend';
+    notesCtrl.text = 'Preferred location: Western suburbs';
 
-    emNameCtrl.text = app.emergencyName ?? '';
-    emPhoneCtrl.text = (app.emergencyPhone ?? '').replaceAll(RegExp(r'\D'), '');
-    emRelationCtrl.text = app.emergencyRelation ?? '';
+    uploadedDocs['photo'] = {
+      'name': 'prerna_profile.jpg',
+      'size': 102400,
+      'path': '/uploads/staff/photos/prerna_profile.jpg',
+      'type': 'image/jpeg',
+    };
+    uploadedDocs['idProof'] = {
+      'name': 'aadhaar_card.pdf',
+      'size': 204800,
+      'path': '/uploads/staff/docs/aadhaar_card.pdf',
+      'type': 'application/pdf',
+    };
+    uploadedDocs['qualification'] = {
+      'name': 'gnm_degree_certificate.pdf',
+      'size': 512000,
+      'path': '/uploads/staff/docs/gnm_degree_certificate.pdf',
+      'type': 'application/pdf',
+    };
 
-    uploadedDocs.clear();
-    app.files.forEach((k, v) {
-      if (v is Map) {
-        uploadedDocs[k] = Map<String, dynamic>.from(v);
-      }
-    });
+    declarationAgreed.value = true;
   }
 
   int get calculatedAge {
@@ -136,10 +175,8 @@ class JoiningController extends GetxController {
 
   // ── Step Navigation & Validation ───────────────────────────
   void nextStep() {
-    errorMessage.value = '';
     final err = validateCurrentStep();
     if (err != null) {
-      errorMessage.value = err;
       Toasty.failed(err);
       return;
     }
@@ -152,7 +189,6 @@ class JoiningController extends GetxController {
   }
 
   void prevStep() {
-    errorMessage.value = '';
     if (currentStep.value > 1) {
       currentStep.value--;
     } else {
@@ -172,7 +208,7 @@ class JoiningController extends GetxController {
       if (age < 18 || age > 70) {
         return 'You must be between 18 and 70 years old to apply (current: $age).';
       }
-      if (selectedGender.value == null || selectedGender.value!.isEmpty) {
+      if (selectedGender.value.isEmpty) {
         return 'Select your gender.';
       }
       if (areaCtrl.text.trim().isEmpty) return 'Enter your area / locality.';
@@ -186,19 +222,23 @@ class JoiningController extends GetxController {
       if (qualificationCtrl.text.trim().isEmpty) {
         return 'Enter your highest qualification.';
       }
-      final exp = int.tryParse(experienceCtrl.text.trim());
-      if (exp == null || exp < 0 || exp > 50) {
-        return 'Enter valid years of experience (0–50).';
+      if (experienceCtrl.text.trim().isEmpty) {
+        return 'Enter your experience details.';
       }
       if (selectedSkills.isEmpty) return 'Pick at least one skill.';
       if (selectedLanguages.isEmpty) {
         return 'Pick at least one language you speak.';
       }
       if (selectedAvailability.isEmpty) return 'Pick when you can work.';
-      if (emNameCtrl.text.trim().isEmpty) return 'Enter an emergency contact name.';
+      if (emNameCtrl.text.trim().isEmpty) {
+        return 'Enter an emergency contact name.';
+      }
       final emPhone = emPhoneCtrl.text.replaceAll(RegExp(r'\D'), '');
       if (emPhone.length != 10) {
         return 'Enter a 10-digit emergency contact mobile number.';
+      }
+      if (emRelationCtrl.text.trim().isEmpty) {
+        return 'Enter relationship to emergency contact.';
       }
     }
 
@@ -225,7 +265,6 @@ class JoiningController extends GetxController {
   // ── Document Pickers ───────────────────────────────────────
   Future<void> pickDocument(String key, {bool imageOnly = false}) async {
     uploadingKeys[key] = true;
-    errorMessage.value = '';
 
     try {
       if (key == 'photo' || imageOnly) {
@@ -245,7 +284,6 @@ class JoiningController extends GetxController {
           Toasty.success('Uploaded ${file.name}');
         }
       } else {
-        // Can pick either image or PDF
         final result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
           allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
@@ -268,69 +306,211 @@ class JoiningController extends GetxController {
     }
   }
 
+  // ── Build API Payload ──────────────────────────────────────
+  Map<String, dynamic> buildPayload() {
+    return {
+      'verificationToken': verificationToken.value,
+      'name': nameCtrl.text.trim(),
+      'email': emailCtrl.text.trim(),
+      'phone': phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), ''),
+      'dob': dobCtrl.text.trim(),
+      'gender': selectedGender.value.toLowerCase(),
+      'city': selectedCity.value,
+      'area': areaCtrl.text.trim(),
+      'address': addressCtrl.text.trim(),
+      'qualification': qualificationCtrl.text.trim(),
+      'regNo': regNoCtrl.text.trim(),
+      'experience': experienceCtrl.text.trim(),
+      'skills': selectedSkills.toList(),
+      'language': selectedLanguages.toList(),
+      'availability': selectedAvailability.toList(),
+      'emergencyName': emNameCtrl.text.trim(),
+      'emergencyPhone': emPhoneCtrl.text.trim().replaceAll(RegExp(r'\D'), ''),
+      'emergencyRelation': emRelationCtrl.text.trim(),
+      'files': Map<String, dynamic>.from(uploadedDocs),
+      'notes': notesCtrl.text.trim(),
+    };
+  }
+
   // ── Submit Application ─────────────────────────────────────
   Future<void> submitApplication() async {
     isSubmitting.value = true;
     try {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final isUpdating = editingId != null;
-      final appId = editingId ?? 'app_${now.toString().substring(6)}';
+      final payload = buildPayload();
+      Logger.m(tag: 'Staff Register Payload', value: payload);
 
-      final historyEntry = {
-        'status': 'pending',
-        'at': now,
-        'by': 'applicant',
-        'note': isUpdating
-            ? 'Application resubmitted with updates'
-            : 'Application submitted',
-      };
+      final response = await Repository.instance.registerStaff(payload);
 
-      final newApplication = StaffModel(
-        id: appId,
-        name: nameCtrl.text.trim(),
-        role: selectedRole.value ?? 'Caregiver',
-        phone: phoneCtrl.text.replaceAll(RegExp(r'\D'), ''),
-        email: emailCtrl.text.trim().isNotEmpty ? emailCtrl.text.trim() : null,
-        dob: dobCtrl.text,
-        gender: selectedGender.value,
-        city: selectedCity.value,
-        area: areaCtrl.text.trim(),
-        address: addressCtrl.text.trim(),
-        qualification: qualificationCtrl.text.trim(),
-        regNo: regNoCtrl.text.trim().isNotEmpty ? regNoCtrl.text.trim() : null,
-        experience: experienceCtrl.text.trim(),
-        skills: selectedSkills.toList(),
-        languages: selectedLanguages.toList(),
-        availability: selectedAvailability.toList(),
-        emergencyName: emNameCtrl.text.trim(),
-        emergencyPhone: emPhoneCtrl.text.replaceAll(RegExp(r'\D'), ''),
-        emergencyRelation: emRelationCtrl.text.trim(),
-        files: Map<String, dynamic>.from(uploadedDocs),
-        applied: true,
-        approval: 'pending',
-        docs: 'pending',
-        onDuty: false,
-        staffId: 'ljkhlkh'
-      );
+      final isSuccess =
+          response != null &&
+          (response['success'] == true ||
+              response['status'] == 'success' ||
+              response['data'] != null);
 
-      await staffService.saveApplication(newApplication);
+      if (isSuccess) {
+        final appId =
+            response['data']?['id']?.toString() ??
+            response['data']?['staffId']?.toString() ??
+            response['id']?.toString() ??
+            'app_${DateTime.now().millisecondsSinceEpoch}';
 
-      Toasty.success(
-        isUpdating
-            ? 'Application updated successfully!'
-            : 'Application submitted to Eldoria Care Desk!',
-      );
+        // Local cache for offline tracking
+        final model = StaffModel(
+          id: appId,
+          staffId:
+              response['data']?['staffId']?.toString() ??
+              'STF_${DateTime.now().millisecondsSinceEpoch}',
+          name: nameCtrl.text.trim(),
+          role: selectedRole.value ?? qualificationCtrl.text.trim(),
+          phone: phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), ''),
+          email: emailCtrl.text.trim(),
+          dob: dobCtrl.text.trim(),
+          gender: selectedGender.value,
+          city: selectedCity.value,
+          area: areaCtrl.text.trim(),
+          address: addressCtrl.text.trim(),
+          qualification: qualificationCtrl.text.trim(),
+          regNo: regNoCtrl.text.trim(),
+          experience: experienceCtrl.text.trim(),
+          skills: selectedSkills.toList(),
+          languages: selectedLanguages.toList(),
+          availability: selectedAvailability.toList(),
+          emergencyName: emNameCtrl.text.trim(),
+          emergencyPhone: emPhoneCtrl.text.trim().replaceAll(RegExp(r'\D'), ''),
+          emergencyRelation: emRelationCtrl.text.trim(),
+          files: Map<String, dynamic>.from(uploadedDocs),
+          notes: notesCtrl.text.trim(),
+          applied: true,
+          approval: 'pending',
+          docs: 'pending',
+          submittedAt: 'Just now',
+        );
+        await StaffService.instance.saveApplication(model);
 
-      // Navigate to Track Application Screen
-      Get.offNamed(
-        AppRoutes.trackJoiningStatus,
-        arguments: {'trackId': appId},
-      );
+        Toasty.success('Application submitted successfully!');
+        Get.offNamed(
+          AppRoutes.trackJoiningStatus,
+          arguments: {'trackId': appId},
+        );
+      } else {
+        final message =
+            response?['message'] ??
+            response?['error'] ??
+            'Registration failed. Please check your details.';
+        Toasty.failed(message.toString());
+      }
     } catch (e) {
-      errorMessage.value = 'Failed to submit application: $e';
-      Toasty.failed(errorMessage.value);
+      Logger.e(tag: 'Register Staff Error', value: e);
+      Toasty.failed('Could not submit application: $e');
     } finally {
       isSubmitting.value = false;
+    }
+  }
+
+  void changeNumber() {
+    isOtpSent.value = false;
+    otpCtrl.clear();
+    _resendTimer?.cancel();
+    otpCountdown.value = 0;
+  }
+
+  void _startCountdown() {
+    _resendTimer?.cancel();
+    otpCountdown.value = 30;
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (otpCountdown.value > 0) {
+        otpCountdown.value--;
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  Future<void> sendOtp() async {
+    final number = phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
+    if (number.length != 10) {
+      Toasty.failed('Enter a valid 10-digit mobile number');
+      return;
+    }
+    isSendingOtp.value = true;
+    try {
+      final response = await Repository.instance.sendOtp(
+        number,
+        'registration',
+      );
+      if (response == null || response['success'] == false) {
+        Toasty.failed(response?['message'] ?? 'Failed to send OTP');
+        return;
+      } else {
+        isOtpSent.value = true;
+        _startCountdown();
+        if (response['data'] != null) {
+          if (response['data']['phone'] != null) {
+            phoneCtrl.text = response['data']['phone'].toString();
+          }
+          if (response['data']['otp'] != null) {
+            final otp = response['data']['otp'].toString();
+            otpCtrl.text = otp;
+            await Clipboard.setData(ClipboardData(text: otp));
+            Toasty.success('Demo OTP: $otp (copied to clipboard)');
+          } else {
+            Toasty.success('OTP sent successfully');
+          }
+        } else {
+          Toasty.success('OTP sent successfully');
+        }
+      }
+    } catch (e) {
+      Logger.e(tag: 'Send OTP Error', value: e);
+      Toasty.failed('Could not send OTP: $e');
+    } finally {
+      isSendingOtp.value = false;
+    }
+  }
+
+  Future<void> verifyOtp() async {
+    final number = phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
+    final otp = otpCtrl.text.trim();
+    if (number.length != 10) {
+      Toasty.failed('Enter a valid 10-digit mobile number');
+      return;
+    }
+    if (otp.length != 6) {
+      Toasty.failed('Enter a valid 6-digit OTP');
+      return;
+    }
+    isVerifyingOtp.value = true;
+    try {
+      final response = await Repository.instance.verifyOtp(
+        number,
+        otp,
+        'registration',
+      );
+      final isSuccess =
+          response != null &&
+          (response['success'] == true ||
+              response['status'] == 'success' ||
+              (response['data'] != null &&
+                  response['data']['isVerified'] == true));
+
+      if (isSuccess) {
+        final token =
+            response['data']?['verificationToken']?.toString() ??
+            response['verificationToken']?.toString() ??
+            '';
+        verificationToken.value = token;
+        isOtpVerified.value = true;
+        _resendTimer?.cancel();
+        Toasty.success('Phone verified successfully!');
+        currentStep.value = 1;
+      } else {
+        Toasty.failed(response?['message'] ?? 'Invalid OTP entered');
+      }
+    } catch (e) {
+      Logger.e(tag: 'Error occurred while verifying OTP', value: e);
+      Toasty.failed('somethingWentWrong'.t);
+    } finally {
+      isVerifyingOtp.value = false;
     }
   }
 }

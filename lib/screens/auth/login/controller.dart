@@ -48,7 +48,7 @@ class LoginController extends GetxController {
     }
     isLoading.value = true;
     try {
-      final response = await Repository.instance.sendOtp(number);
+      final response = await Repository.instance.sendOtp(number, 'login');
       if (response['success'] == false) {
         Toasty.failed(response['message'] ?? '');
         return;
@@ -71,7 +71,7 @@ class LoginController extends GetxController {
       return;
     }
     try {
-      final response = await Repository.instance.verifyOtp(phone, otp);
+      final response = await Repository.instance.verifyOtp(phone, otp, 'login');
       if (response['success']) {
       } else {
         Toasty.failed('Staff record not found');
