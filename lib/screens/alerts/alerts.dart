@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/model/client_models.dart';
 import 'package:eldoriaCare/screens/alerts/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
@@ -12,7 +11,6 @@ class AlertsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.put(AlertsController());
-    final clientData = ClientDataController.to;
 
     return Scaffold(
       backgroundColor: ThemeColors.appBackground,
@@ -49,69 +47,85 @@ class AlertsScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        final list = clientData.notifications;
-
-        if (list.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.w),
-              child: Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: ThemeColors.cardSurface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: ThemeColors.cardBorder),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 15.w,
-                      height: 15.w,
-                      decoration: const BoxDecoration(
-                        color: ThemeColors.surface2,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: ThemeColors.goldenAmber,
-                        size: 26,
-                      ),
-                    ),
-                    2.h.vs,
-                    Text(
-                      'You\'re all caught up',
-                      style: TextStyle(
-                        color: ThemeColors.textWhite,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    0.6.h.vs,
-                    Text(
-                      'Booking updates will show here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: ThemeColors.textMuted,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+        if (c.isLoading.value && c.notifications.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(color: ThemeColors.goldenAmber),
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-          itemCount: list.length,
-          itemBuilder: (context, index) {
-            final item = list[index];
-            return _buildNotificationCard(context, item, c);
-          },
+        final list = c.notifications;
+
+        if (list.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return RefreshIndicator(
+          onRefresh: c.loadNotifications,
+          color: ThemeColors.goldenAmber,
+          backgroundColor: ThemeColors.cardSurface,
+          child: ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+            itemCount: list.length,
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final item = list[index];
+              return _buildNotificationCard(context, item, c);
+            },
+          ),
         );
       }),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.w),
+        child: Container(
+          padding: EdgeInsets.all(6.w),
+          decoration: BoxDecoration(
+            color: ThemeColors.cardSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: ThemeColors.cardBorder),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 15.w,
+                height: 15.w,
+                decoration: const BoxDecoration(
+                  color: ThemeColors.surface2,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: ThemeColors.goldenAmber,
+                  size: 26,
+                ),
+              ),
+              2.h.vs,
+              Text(
+                'You\'re all caught up',
+                style: TextStyle(
+                  color: ThemeColors.textWhite,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              0.6.h.vs,
+              Text(
+                'Booking updates will show here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ThemeColors.textMuted,
+                  fontSize: 12.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -126,14 +140,16 @@ class AlertsScreen extends StatelessWidget {
         color: ThemeColors.cardSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: item.read ? ThemeColors.cardBorder : ThemeColors.goldenAmber.withValues(alpha: 0.5),
+          color: item.read
+              ? ThemeColors.cardBorder
+              : ThemeColors.goldenAmber.withValues(alpha: 0.5),
           width: item.read ? 1 : 1.4,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: ThemeColors.shadowColorDark,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -189,7 +205,7 @@ class AlertsScreen extends StatelessWidget {
                       ),
                       0.8.h.vs,
                       Text(
-                        _formatTimeAgo(item.at),
+                        c.formatTimeAgo(item.at),
                         style: TextStyle(
                           color: ThemeColors.textPlaceholder,
                           fontSize: 10.sp,
@@ -217,16 +233,5 @@ class AlertsScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatTimeAgo(int timestamp) {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final diffMin = ((now - timestamp) / 60000).round();
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return '${diffMin}m ago';
-    final diffHours = (diffMin / 60).round();
-    if (diffHours < 24) return '${diffHours}h ago';
-    final diffDays = (diffHours / 24).round();
-    return '${diffDays}d ago';
   }
 }

@@ -63,9 +63,10 @@ class ApiProvider {
 
     return Options(
       headers: {
+        'Content-Type': 'application/json',
         'pn': Const.packageName.isNotEmpty
             ? Const.packageName
-            : 'com.eldoria.staff',
+            : 'com.eldoria.client',
         'vc': Const.versionCode.isNotEmpty ? Const.versionCode : '1',
         'vn': Const.versionName.isNotEmpty ? Const.versionName : '1.0.0',
         'ot': PlatformType.platformType,
@@ -216,11 +217,15 @@ class ApiProvider {
         return response.data;
       }
 
-      return {'success': false, 'message': response.data['message']};
+      if (response.data is Map) {
+        return response.data;
+      }
+
+      return {'success': false, 'message': response.statusMessage ?? 'Request failed'};
     } catch (e) {
       Logger.e(tag: 'API $endPoint Error', value: e);
       if (reportError) reportDioError(endPoint, e);
-      return {'success': false};
+      return {'success': false, 'message': e.toString()};
     }
   }
 

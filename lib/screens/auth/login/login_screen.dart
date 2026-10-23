@@ -1,8 +1,9 @@
-import 'dart:math' as math;
+import 'package:eldoriaCare/utils/const.dart';
+import 'package:eldoriaCare/widget/animation/ecg_animation.dart';
+import 'package:eldoriaCare/widget/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/screens/auth/login/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
@@ -11,8 +12,9 @@ import 'package:eldoriaCare/widget/ticker_text.dart';
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
-  final LoginController c = Get.put(LoginController());
-  final ClientDataController clientData = ClientDataController.to;
+  final LoginController c = Get.isRegistered<LoginController>()
+      ? Get.find<LoginController>()
+      : Get.put(LoginController());
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +28,15 @@ class LoginScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: ThemeColors.appBackground,
         body: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               // ── Hero Scene with ECG & Ticker ──────────────────────────
-              _buildHeroScene(context),
+              _buildHeroScene(),
 
-              // ── Login / OTP Card (overlapping with -36 offset) ─────────
-              _buildFormCard(context),
+              // ── Login / OTP Card (overlapping with -32 offset) ─────────
+              _buildFormCard(),
 
               3.h.vs,
             ],
@@ -43,7 +47,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   // ── Hero Scene ────────────────────────────────────────────────────────
-  Widget _buildHeroScene(BuildContext context) {
+  Widget _buildHeroScene() {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(6.w, 8.h, 6.w, 7.h),
@@ -68,6 +72,7 @@ class LoginScreen extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Logo with Golden Aura
           Container(
@@ -105,7 +110,6 @@ class LoginScreen extends StatelessWidget {
 
           2.5.h.vs,
 
-          // Main Headline: "Trusted care for your loved ones, at home."
           Text(
             'Trusted care for your loved ones, at home.',
             textAlign: TextAlign.center,
@@ -144,20 +148,14 @@ class LoginScreen extends StatelessWidget {
           2.h.vs,
 
           // ECG Wave Graphic
-          SizedBox(
-            width: 70.w,
-            height: 3.h,
-            child: CustomPaint(
-              painter: _StaticEcgPainter(),
-            ),
-          ),
+          SizedBox(width: 90.w, height: 3.h, child: const EcgWaveAnimation()),
         ],
       ),
     );
   }
 
-  // ── Form Card ─────────────────────────────────────────────────────────
-  Widget _buildFormCard(BuildContext context) {
+  // ── Form Card (Single Obx boundary) ───────────────────────────────────
+  Widget _buildFormCard() {
     return Transform.translate(
       offset: const Offset(0, -32),
       child: Padding(
@@ -177,7 +175,7 @@ class LoginScreen extends StatelessWidget {
             ],
           ),
           child: Obx(
-            () => c.isOtpStep.value ? _buildOtpStep(context) : _buildDetailsStep(context),
+            () => c.isOtpStep.value ? _buildOtpStep() : _buildDetailsStep(),
           ),
         ),
       ),
@@ -185,64 +183,133 @@ class LoginScreen extends StatelessWidget {
   }
 
   // ── Step 1: Name, Phone, City Details ──────────────────────────────────
-  Widget _buildDetailsStep(BuildContext context) {
+  Widget _buildDetailsStep() {
+    final bool isSignUp = c.isSignUp.value;
+    final bool isLoading = c.isLoading.value;
+    final String error = c.errorMessage.value;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Title Row with "Use demo account" button
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Log in or sign up',
-              style: TextStyle(
-                color: ThemeColors.textWhite,
-                fontSize: 17.sp,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            InkWell(
-              onTap: c.useDemoAccount,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 2.8.w, vertical: 0.6.h),
-                decoration: BoxDecoration(
-                  color: ThemeColors.surface2,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: ThemeColors.cardBorder),
-                ),
-                child: Text(
-                  'Use demo account',
-                  style: TextStyle(
-                    color: ThemeColors.goldenAmber,
-                    fontSize: 10.5.sp,
-                    fontWeight: FontWeight.w700,
+        // Mode Selector: Log In vs Sign Up
+        Container(
+          height: 5.h,
+          padding: EdgeInsets.all(0.4.h),
+          decoration: BoxDecoration(
+            color: ThemeColors.surface2,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ThemeColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => c.setSignUpMode(false),
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: !isSignUp
+                          ? ThemeColors.goldenAmber
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'Log in',
+                      style: TextStyle(
+                        color: !isSignUp
+                            ? ThemeColors.deepNavy
+                            : ThemeColors.textMuted,
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ),
+              Expanded(
+                child: InkWell(
+                  onTap: () => c.setSignUpMode(true),
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSignUp
+                          ? ThemeColors.goldenAmber
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'Sign up',
+                      style: TextStyle(
+                        color: isSignUp
+                            ? ThemeColors.deepNavy
+                            : ThemeColors.textMuted,
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        2.h.vs,
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isSignUp ? 'Create Account' : 'Welcome Back',
+                  style: TextStyle(
+                    color: ThemeColors.textWhite,
+                    fontSize: 16.5.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                0.3.h.vs,
+                Text(
+                  isSignUp
+                      ? 'Sign up for Eldoria Care'
+                      : 'Log in with mobile OTP',
+                  style: TextStyle(
+                    color: ThemeColors.textMuted,
+                    fontSize: 11.sp,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
 
-        2.2.h.vs,
-
-        // Name Field
-        Text(
-          'Your name',
-          style: TextStyle(
-            color: ThemeColors.textMuted,
-            fontSize: 11.5.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        0.8.h.vs,
-        TextField(
-          controller: c.nameController,
-          style: TextStyle(color: ThemeColors.textWhite, fontSize: 13.5.sp),
-          decoration: _inputDecoration(hint: 'e.g. Priya Mehta'),
-        ),
-
         1.8.h.vs,
+
+        // Optional Name Field for Sign Up
+        if (isSignUp) ...[
+          Text(
+            'Your name',
+            style: TextStyle(
+              color: ThemeColors.textMuted,
+              fontSize: 11.5.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          0.8.h.vs,
+          TextField(
+            controller: c.nameController,
+            style: TextStyle(color: ThemeColors.textWhite, fontSize: 13.5.sp),
+            decoration: _inputDecoration(hint: 'e.g. Priya Mehta'),
+          ),
+          1.8.h.vs,
+        ],
 
         // Phone Field with +91 prefix
         Text(
@@ -279,65 +346,46 @@ class LoginScreen extends StatelessWidget {
               child: TextField(
                 controller: c.phoneController,
                 keyboardType: TextInputType.phone,
-                style: TextStyle(color: ThemeColors.textWhite, fontSize: 13.5.sp),
-                decoration: _inputDecoration(hint: '98765 43210'),
+                maxLength: 10,
+                style: TextStyle(
+                  color: ThemeColors.textWhite,
+                  fontSize: 13.5.sp,
+                ),
+                decoration: _inputDecoration(
+                  hint: '98765 43210',
+                ).copyWith(counterText: ''),
               ),
             ),
           ],
         ),
 
         1.8.h.vs,
-
-        // City Selector Dropdown
-        Text(
-          'Your city',
-          style: TextStyle(
-            color: ThemeColors.textMuted,
-            fontSize: 11.5.sp,
-            fontWeight: FontWeight.w600,
+        if (isSignUp) ...[
+          // City Selector Dropdown
+          Text(
+            'Your city',
+            style: TextStyle(
+              color: ThemeColors.textMuted,
+              fontSize: 11.5.sp,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        0.8.h.vs,
-        Obx(
-          () => Container(
+          0.8.h.vs,
+          CityDropdown(
             height: 5.8.h,
-            padding: EdgeInsets.symmetric(horizontal: 3.5.w),
-            decoration: BoxDecoration(
-              color: ThemeColors.inputBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: ThemeColors.lineBorder),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: c.selectedCity.value,
-                dropdownColor: ThemeColors.cardSurface,
-                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: ThemeColors.goldenAmber),
-                isExpanded: true,
-                items: clientData.cities.map((city) {
-                  return DropdownMenuItem<String>(
-                    value: city.id,
-                    child: Text(
-                      city.name,
-                      style: TextStyle(
-                        color: ThemeColors.textWhite,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) c.selectedCity.value = val;
-                },
-              ),
-            ),
+            width: double.infinity,
+            color: ThemeColors.inputBg,
+            selectedCity: c.selectedCity.value,
+            onChanged: (val) {
+              if (val != null) c.selectedCity.value = val;
+            },
           ),
-        ),
+        ],
 
-        if (c.errorMessage.value.isNotEmpty) ...[
+        if (error.isNotEmpty) ...[
           1.2.h.vs,
           Text(
-            c.errorMessage.value,
+            error,
             style: TextStyle(
               color: ThemeColors.errorRedColor,
               fontSize: 11.sp,
@@ -352,52 +400,91 @@ class LoginScreen extends StatelessWidget {
         _buildGradientButton(
           label: 'Send OTP',
           onTap: c.sendOtp,
+          isLoading: isLoading,
         ),
       ],
     );
   }
 
   // ── Step 2: 6-Digit OTP Step ──────────────────────────────────────────
-  Widget _buildOtpStep(BuildContext context) {
+  Widget _buildOtpStep() {
+    final bool isLoading = c.isLoading.value;
+    final String error = c.errorMessage.value;
+    final int resendSeconds = c.resendSeconds.value;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Enter OTP',
-          style: TextStyle(
-            color: ThemeColors.textWhite,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Enter OTP',
+              style: TextStyle(
+                color: ThemeColors.textWhite,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            InkWell(
+              onTap: c.changeNumber,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: EdgeInsets.all(1.w),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.edit_rounded,
+                      color: ThemeColors.goldenAmber,
+                      size: 14,
+                    ),
+                    1.w.hs,
+                    Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: ThemeColors.goldenAmber,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
         0.5.h.vs,
         Text(
           'Sent to +91 ${c.phoneController.text.trim()}',
-          style: TextStyle(
-            color: ThemeColors.textMuted,
-            fontSize: 12.sp,
-          ),
+          style: TextStyle(color: ThemeColors.textMuted, fontSize: 12.sp),
         ),
 
         1.8.h.vs,
 
-        // Notice box matching HTML
+        // Notice box
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 3.5.w, vertical: 1.2.h),
           decoration: BoxDecoration(
             color: ThemeColors.infoBlueBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: ThemeColors.brandBlue.withValues(alpha: 0.4)),
+            border: Border.all(
+              color: ThemeColors.brandBlue.withValues(alpha: 0.4),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline_rounded, color: ThemeColors.infoBlueFg, size: 18),
+              const Icon(
+                Icons.shield_outlined,
+                color: ThemeColors.infoBlueFg,
+                size: 18,
+              ),
               2.5.w.hs,
               Expanded(
                 child: Text(
-                  'Demo mode: SMS isn\'t connected yet. Use OTP 123456.',
+                  'Enter the 6-digit verification code sent to your mobile number.',
                   style: TextStyle(
                     color: ThemeColors.infoBlueFg,
                     fontSize: 11.5.sp,
@@ -433,15 +520,55 @@ class LoginScreen extends StatelessWidget {
             fontWeight: FontWeight.w800,
             letterSpacing: 10,
           ),
-          decoration: _inputDecoration(hint: '••••••').copyWith(
-            counterText: '',
+          decoration: _inputDecoration(
+            hint: '••••••',
+          ).copyWith(counterText: ''),
+        ),
+
+        1.5.h.vs,
+
+        // Resend OTP countdown row
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Didn't receive code? ",
+                style: TextStyle(
+                  color: ThemeColors.textMuted,
+                  fontSize: 11.5.sp,
+                ),
+              ),
+              if (resendSeconds > 0)
+                Text(
+                  'Resend in ${resendSeconds}s',
+                  style: TextStyle(
+                    color: ThemeColors.goldenAmberLight,
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: isLoading ? null : c.resendOtp,
+                  child: Text(
+                    'Resend OTP',
+                    style: TextStyle(
+                      color: ThemeColors.goldenAmber,
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w800,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
 
-        if (c.errorMessage.value.isNotEmpty) ...[
+        if (error.isNotEmpty) ...[
           1.2.h.vs,
           Text(
-            c.errorMessage.value,
+            error,
             style: TextStyle(
               color: ThemeColors.errorRedColor,
               fontSize: 11.sp,
@@ -450,13 +577,13 @@ class LoginScreen extends StatelessWidget {
           ),
         ],
 
-        2.5.h.vs,
+        2.2.h.vs,
 
         // Verify button
         _buildGradientButton(
           label: 'Verify & continue',
           onTap: c.verifyOtp,
-          isLoading: c.isLoading.value,
+          isLoading: isLoading,
         ),
 
         1.2.h.vs,
@@ -512,7 +639,9 @@ class LoginScreen extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
           child: isLoading
               ? const SizedBox(
@@ -553,48 +682,11 @@ class LoginScreen extends StatelessWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.goldenAmber, width: 1.5),
+        borderSide: const BorderSide(
+          color: ThemeColors.goldenAmber,
+          width: 1.5,
+        ),
       ),
     );
   }
-}
-
-class _StaticEcgPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double scaleX = size.width / 300.0;
-    final double scaleY = size.height / 32.0;
-
-    final Path path = Path();
-    path.moveTo(0 * scaleX, 16 * scaleY);
-    path.lineTo(60 * scaleX, 16 * scaleY);
-    path.relativeLineTo(6 * scaleX, -5 * scaleY);
-    path.relativeLineTo(6 * scaleX, 5 * scaleY);
-    path.lineTo(100 * scaleX, 16 * scaleY);
-    path.relativeLineTo(6 * scaleX, -18 * scaleY);
-    path.relativeLineTo(8 * scaleX, 36 * scaleY);
-    path.relativeLineTo(8 * scaleX, -26 * scaleY);
-    path.relativeLineTo(6 * scaleX, 8 * scaleY);
-    path.lineTo(190 * scaleX, 16 * scaleY);
-    path.relativeLineTo(6 * scaleX, -5 * scaleY);
-    path.relativeLineTo(6 * scaleX, 5 * scaleY);
-    path.lineTo(230 * scaleX, 16 * scaleY);
-    path.relativeLineTo(6 * scaleX, -18 * scaleY);
-    path.relativeLineTo(8 * scaleX, 36 * scaleY);
-    path.relativeLineTo(8 * scaleX, -26 * scaleY);
-    path.relativeLineTo(6 * scaleX, 8 * scaleY);
-    path.lineTo(300 * scaleX, 16 * scaleY);
-
-    final Paint paint = Paint()
-      ..color = ThemeColors.goldenAmber.withValues(alpha: 0.5)
-      ..strokeWidth = 1.8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

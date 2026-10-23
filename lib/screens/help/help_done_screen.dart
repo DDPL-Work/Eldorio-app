@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
+import 'package:eldoriaCare/screens/help/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
 import 'package:eldoriaCare/widget/care_desk_buttons.dart';
@@ -13,8 +12,12 @@ class HelpDoneScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final clientData = ClientDataController.to;
+    final c = Get.isRegistered<HelpController>() ? HelpController.to : Get.put(HelpController());
     final String enquiryId = Get.arguments?.toString() ?? '';
+
+    if (c.currentEnquiry.value == null && enquiryId.isNotEmpty) {
+      c.loadEnquiry(enquiryId);
+    }
 
     return Scaffold(
       backgroundColor: ThemeColors.appBackground,
@@ -26,9 +29,9 @@ class HelpDoneScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Obx(() {
-          final e = clientData.getEnquiry(enquiryId);
+          final e = c.currentEnquiry.value;
           return Text(
-            'Help request ${e?.code ?? ''}',
+            e != null ? 'Help request ${e.code}' : 'Help request',
             style: TextStyle(
               color: ThemeColors.textWhite,
               fontSize: 16.sp,
@@ -38,7 +41,13 @@ class HelpDoneScreen extends StatelessWidget {
         }),
       ),
       body: Obx(() {
-        final e = clientData.getEnquiry(enquiryId);
+        if (c.isEnquiryLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: ThemeColors.goldenAmber),
+          );
+        }
+
+        final e = c.currentEnquiry.value;
         if (e == null) {
           return Center(
             child: Text(
@@ -48,18 +57,19 @@ class HelpDoneScreen extends StatelessWidget {
           );
         }
 
-        final recService = e.recommended != null ? clientData.getService(e.recommended) : null;
+        final recommendedServiceName =
+            e.recommended != null ? c.getServiceName(e.recommended) : '';
 
         return ListView(
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
           children: [
-            // Status row: Pill + Timestamp
+            // ── Status row: Pill + Timestamp ──────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 StatusPill(status: e.status),
                 Text(
-                  _formatTimestamp(e.createdAt),
+                  c.formatTimestamp(e.createdAt),
                   style: TextStyle(
                     color: ThemeColors.textMuted,
                     fontSize: 11.5.sp,
@@ -70,7 +80,7 @@ class HelpDoneScreen extends StatelessWidget {
 
             2.h.vs,
 
-            // "Request sent to our care team" Banner if new
+            // ── "Request sent to our care team" Banner if new ───────────────
             if (e.status == 'new') ...[
               Container(
                 padding: EdgeInsets.all(4.w),
@@ -113,8 +123,8 @@ class HelpDoneScreen extends StatelessWidget {
               2.2.h.vs,
             ],
 
-            // Note from Eldoria Care Team / Recommendation
-            if (e.adminNote != null || recService != null) ...[
+            // ── Note from Eldoria Care Team / Recommendation ────────────────
+            if (e.adminNote != null || recommendedServiceName.isNotEmpty) ...[
               Container(
                 padding: EdgeInsets.all(4.5.w),
                 decoration: BoxDecoration(
@@ -134,7 +144,7 @@ class HelpDoneScreen extends StatelessWidget {
                         letterSpacing: 0.8,
                       ),
                     ),
-                    if (e.adminNote != null) ...[
+                    if (e.adminNote != null && e.adminNote!.isNotEmpty) ...[
                       1.h.vs,
                       Text(
                         e.adminNote!,
@@ -145,14 +155,14 @@ class HelpDoneScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (recService != null) ...[
+                    if (recommendedServiceName.isNotEmpty) ...[
                       1.5.h.vs,
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Text(
-                              'Recommended: ${recService.name}',
+                              'Recommended: $recommendedServiceName',
                               style: TextStyle(
                                 color: ThemeColors.textWhite,
                                 fontSize: 13.sp,
@@ -162,7 +172,7 @@ class HelpDoneScreen extends StatelessWidget {
                           ),
                           ElevatedButton(
                             onPressed: () {
-                              Get.toNamed('${AppRoutes.dashboard}/book', arguments: recService.id);
+                              Get.toNamed(AppRoutes.book, arguments: e.recommended);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ThemeColors.goldenAmber,
@@ -181,11 +191,11 @@ class HelpDoneScreen extends StatelessWidget {
               2.2.h.vs,
             ],
 
-            // Converted to booking button
-            if (e.bookingId != null) ...[
+            // ── Converted to booking button ─────────────────────────────────
+            if (e.bookingId != null && e.bookingId!.isNotEmpty) ...[
               ElevatedButton(
                 onPressed: () {
-                  Get.toNamed('${AppRoutes.dashboard}/booking', arguments: e.bookingId);
+                  Get.toNamed(AppRoutes.booking, arguments: e.bookingId);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ThemeColors.brandBlue,
@@ -198,7 +208,7 @@ class HelpDoneScreen extends StatelessWidget {
               2.2.h.vs,
             ],
 
-            // Request Summary Card
+            // ── Request Summary Card ────────────────────────────────────────
             Container(
               padding: EdgeInsets.all(4.5.w),
               decoration: BoxDecoration(
@@ -211,9 +221,12 @@ class HelpDoneScreen extends StatelessWidget {
                 children: [
                   _buildDetailRow('Need', e.description),
                   1.2.h.vs,
-                  _buildDetailRow('Patient', '${e.patientType}${e.patientAge.isNotEmpty ? ' · ${e.patientAge} yrs' : ''}'),
+                  _buildDetailRow(
+                    'Patient',
+                    '${e.patientType}${e.patientAge.isNotEmpty ? ' · ${e.patientAge} yrs' : ''}',
+                  ),
                   1.2.h.vs,
-                  _buildDetailRow('Location', '${e.address}, ${clientData.cityName(e.city)}'),
+                  _buildDetailRow('Location', '${e.address}, ${c.cityName(e.city)}'),
                   1.2.h.vs,
                   _buildDetailRow('Duration', e.duration),
                   1.2.h.vs,
@@ -231,7 +244,7 @@ class HelpDoneScreen extends StatelessWidget {
 
             2.5.h.vs,
 
-            // "Want to talk now?" section with Care desk Call & WhatsApp
+            // ── "Want to talk now?" Section ─────────────────────────────────
             Text(
               'Want to talk now?',
               style: TextStyle(
@@ -277,10 +290,5 @@ class HelpDoneScreen extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatTimestamp(int timestamp) {
-    final d = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    return DateFormat('d MMM, h:mm a').format(d);
   }
 }

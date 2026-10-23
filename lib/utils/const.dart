@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:eldoriaCare/data_handler/api_keys.dart';
 import 'package:eldoriaCare/utils/helper.dart';
+import 'package:eldoriaCare/model/client_models.dart';
 
 class Const {
   static final RxInt notificationCount = 0.obs;
@@ -34,6 +35,30 @@ class Const {
   static const double webWidth = 420.0;
 
   static AppLifecycleState? lifecycleState = AppLifecycleState.resumed;
+
+  static final List<CityItem> cities = [
+    CityItem(id: 'mumbai', name: 'Mumbai', order: 1),
+    CityItem(id: 'thane', name: 'Thane', order: 2),
+    CityItem(id: 'navi-mumbai', name: 'Navi Mumbai', order: 3),
+    CityItem(id: 'pune', name: 'Pune', order: 4),
+    CityItem(id: 'delhi', name: 'Delhi NCR', order: 5),
+    CityItem(id: 'bengaluru', name: 'Bengaluru', order: 6),
+    CityItem(id: 'hyderabad', name: 'Hyderabad', order: 7),
+    CityItem(id: 'chennai', name: 'Chennai', order: 8),
+    CityItem(id: 'kolkata', name: 'Kolkata', order: 9),
+    CityItem(id: 'ahmedabad', name: 'Ahmedabad', order: 10),
+    CityItem(id: 'jaipur', name: 'Jaipur', order: 11),
+    CityItem(id: 'surat', name: 'Surat', order: 12),
+    CityItem(id: 'kochi', name: 'Kochi', order: 13),
+    CityItem(id: 'coimbatore', name: 'Coimbatore', order: 14),
+    CityItem(id: 'nagpur', name: 'Nagpur', order: 15),
+    CityItem(id: 'vadodara', name: 'Vadodara', order: 16),
+    CityItem(id: 'lucknow', name: 'Lucknow', order: 17),
+    CityItem(id: 'chandigarh', name: 'Chandigarh', order: 18),
+    CityItem(id: 'indore', name: 'Indore', order: 19),
+    CityItem(id: 'goa', name: 'Goa', order: 20),
+    CityItem(id: 'dehradun', name: 'Dehradun', order: 21),
+  ];
 }
 
 class PlatformType {
@@ -57,6 +82,65 @@ class PlatformType {
 
   static final RxBool isWebMobileView =
       (100.w <= 411 || isAndroid || isIOS).obs;
+
+  static List<Map<String, dynamic>> cities = [
+    {'name': "Vikāsnagar"},
+    {'name': "Uttarkāshi"},
+    {'name': "Ukhimath"},
+    {'name': "Tehri"},
+    {'name': "Tanakpur"},
+    {'name': "Sultānpur"},
+    {'name': "Srīnagar"},
+    {'name': "Sitārganj"},
+    {'name': "Rāīwāla Bara"},
+    {'name': "Rānikhet"},
+    {'name': "Rāmnagar"},
+    {'name': "Rāipur"},
+    {'name': "Rudrapur"},
+    {'name': "Rudraprayāg"},
+    {'name': "Roorkee"},
+    {'name': "Rishīkesh"},
+    {'name': "Pīpalkoti"},
+    {'name': "Pithorāgarh"},
+    {'name': "Pauri"},
+    {'name': "Narendranagar"},
+    {'name': "Naini Tāl"},
+    {'name': "Mussoorie"},
+    {'name': "Manu Bans Grunt"},
+    {'name': "Manglaur"},
+    {'name': "Lohaghāt"},
+    {'name': "Lansdowne"},
+    {'name': "Laksar"},
+    {'name': "Kālāgarh Project Colony"},
+    {'name': "Kālādhūngi"},
+    {'name': "Kotdwāra"},
+    {'name': "Kichha"},
+    {'name': "Khatīma"},
+    {'name': "Kedārnāth"},
+    {'name': "Kashipur"},
+    {'name': "Joshīmath"},
+    {'name': "Jaspur"},
+    {'name': "Haridwar"},
+    {'name': "Harbatpur"},
+    {'name': "Haldwani"},
+    {'name': "Gangotri"},
+    {'name': "Dwārāhāt"},
+    {'name': "Dugadda"},
+    {'name': "Doiwāla"},
+    {'name': "Dhārchula"},
+    {'name': "Devaprayāg"},
+    {'name': "Dehradun"},
+    {'name': "Clement Town"},
+    {'name': "Champawat"},
+    {'name': "Chakrāta"},
+    {'name': "Bāzpur"},
+    {'name': "Bāgeshwar"},
+    {'name': "Birbhaddar"},
+    {'name': "Bhīm Tāl"},
+    {'name': "Bhowali"},
+    {'name': "Barkot"},
+    {'name': "Almora"},
+  ];
 }
 
 class Status {

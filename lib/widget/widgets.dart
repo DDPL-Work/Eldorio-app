@@ -1,9 +1,7 @@
-import 'package:flutter/gestures.dart';
+import 'package:eldoriaCare/utils/const.dart';
 import 'package:flutter/material.dart';
 import 'package:eldoriaCare/utils/helper.dart';
 import 'package:eldoriaCare/utils/logger.dart';
-import 'package:eldoriaCare/utils/toasty.dart';
-import 'package:get/get.dart';
 
 Widget empty() => SizedBox();
 
@@ -82,268 +80,345 @@ class MyTextStyle extends TextStyle {
   });
 }
 
-class CustomTextField extends StatelessWidget {
-  final TextEditingController controller;
+class CityDropdown extends StatelessWidget {
+  final String? selectedCity;
+  final ValueChanged<String?> onChanged;
   final String hintText;
-  final double? fontSize;
-  final TextInputType keyboardType;
-  final bool obscureText;
-  final Widget? suffixIcon;
-  final Widget? prefixIcon;
   final bool enabled;
-
-  // final VoidCallback? onTab;
-  final VoidCallback? onComplete;
-  final VoidCallback? onChanged;
-
-  const CustomTextField({
-    required this.controller,
-    required this.hintText,
-    this.fontSize,
-    this.keyboardType = TextInputType.text,
-    this.obscureText = false,
-    this.suffixIcon,
-    this.prefixIcon,
-    this.enabled = true,
-    // this.onTab,
-    this.onChanged,
-    this.onComplete,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: ThemeColors.grey.withAlpha(50)),
-        borderRadius: BorderRadius.circular(3.w),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        onEditingComplete: onComplete,
-        onChanged: (v) => onChanged,
-        enabled: enabled,
-        style: TextStyle(
-          color: ThemeColors.textPrimaryColor,
-          fontSize: fontSize ?? 4.w,
-        ),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
-            color: ThemeColors.greyColor,
-            fontSize: fontSize ?? 4.w,
-          ),
-          filled: true,
-          fillColor: ThemeColors.offWhite,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(3.w),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.w),
-          suffixIcon: suffixIcon,
-          prefixIcon: prefixIcon,
-        ),
-      ),
-    );
-  }
-}
-
-class CustomButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
+  final double? width;
+  final double? height;
   final Color? color;
+  final bool isExpanded;
 
-  const CustomButton({
-    required this.text,
-    required this.onPressed,
+  const CityDropdown({
     super.key,
+    required this.selectedCity,
+    required this.onChanged,
+    this.hintText = 'Select city',
+    this.enabled = true,
+    this.width,
+    this.height,
     this.color,
+    this.isExpanded = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 7.h,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color ?? ThemeColors.primaryColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4.w),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 4.w,
-            fontWeight: FontWeight.w600,
-            color: ThemeColors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
+    final cityList = Const.cities;
+    final rawCity = selectedCity?.trim().toLowerCase();
 
-class SocialButton extends StatelessWidget {
-  final String icon;
-  final Function() onTap;
+    final matchedCity = cityList.where((city) {
+      return city.id.toLowerCase() == rawCity ||
+          city.name.toLowerCase() == rawCity;
+    }).firstOrNull;
 
-  const SocialButton({required this.icon, required this.onTap, super.key});
+    final selectedValue = matchedCity?.id;
+    final hasValue = matchedCity != null;
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      // onTap: onTap,
-      onTap: () {
-        Toasty.info('This feature is not available now');
-      },
-      child: Container(
-        width: 12.w,
-        height: 12.w,
-        padding: EdgeInsets.all(3.w),
-        decoration: BoxDecoration(
-          color: ThemeColors.offWhite,
-          borderRadius: BorderRadius.circular(3.w),
-          border: Border.all(
-            color: ThemeColors.greyColor.withValues(alpha: 0.2),
-          ),
-        ),
-        // child: Icon(icon, color: color, size: 6.w),
-        child: Image(image: AssetImage(icon)),
-      ),
-    );
-  }
-}
-
-Widget customRefresh({
-  required Widget child,
-  required Future<void> Function() onRefresh,
-}) {
-  return RefreshIndicator(
-    onRefresh: onRefresh,
-    color: ThemeColors.white,
-    backgroundColor: ThemeColors.colorSecondary.withAlpha(200),
-    child: child,
-  );
-}
-
-class CustomTabBarView extends StatelessWidget {
-  final List<Widget> children;
-  final ScrollPhysics? physics;
-  final DragStartBehavior dragStartBehavior;
-  final double viewportFraction;
-  final Clip clipBehavior;
-
-  const CustomTabBarView({
-    super.key,
-    required this.children,
-    this.physics,
-    this.dragStartBehavior = DragStartBehavior.start,
-    this.viewportFraction = 1.0,
-    this.clipBehavior = Clip.hardEdge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TabBarView(
-      physics: physics,
-      dragStartBehavior: dragStartBehavior,
-      viewportFraction: viewportFraction,
-      clipBehavior: clipBehavior,
-      children: children,
-    );
-  }
-}
-
-class DummyTextField extends StatelessWidget {
-  final RxString hintText;
-  final double? fontSize;
-  final Widget? suffixIcon;
-  final VoidCallback? onTab;
-
-  const DummyTextField({
-    required this.hintText,
-    this.fontSize,
-    this.suffixIcon,
-    this.onTab,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTab,
-      child: Container(
-        height: 14.w,
-        padding: EdgeInsets.symmetric(horizontal: 4.w),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: ThemeColors.black.withAlpha(60),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          color: ThemeColors.offWhite,
-        ),
-        child: Row(
-          children: [
-            if (suffixIcon != null) ...[suffixIcon!, 2.w.hs],
-            Expanded(
-              child: ClipRect(
-                child: Obx(() {
-                  final currentKey = ValueKey(hintText.value);
-                  return AnimatedSwitcher(
-                    duration: const Duration(seconds: 1),
-                    layoutBuilder: (currentChild, previousChildren) {
-                      return currentChild ?? const SizedBox.shrink();
-                    },
-                    transitionBuilder: (child, animation) {
-                      if (child.key != currentKey) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final slideAnimation =
-                          Tween<Offset>(
-                            begin: const Offset(0, -1),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          );
-
-                      return SlideTransition(
-                        position: slideAnimation,
-                        child: child,
-                      );
-                    },
-                    child: Align(
-                      key: currentKey,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        hintText.value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: ThemeColors.greyColor,
-                          fontSize: fontSize ?? 4.w,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: Material(
+        color: color ?? ThemeColors.cardSurface,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: enabled
+              ? () => _openCitySheet(context, cityList, selectedValue)
+              : null,
+          child: Container(
+            width: width,
+            height: height,
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.2.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color != null
+                    ? ThemeColors.lineBorder
+                    : ThemeColors.cardBorder,
               ),
             ),
-          ],
+            child: Row(
+              mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  fit: isExpanded ? FlexFit.tight : FlexFit.loose,
+                  child: Text(
+                    hasValue ? matchedCity.name : hintText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: hasValue
+                          ? ThemeColors.textWhite
+                          : ThemeColors.textWhite.withValues(alpha: 0.6),
+                      fontSize: 12.sp,
+                      fontWeight: hasValue ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 2.w),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: ThemeColors.goldenAmber,
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+
+  void _openCitySheet(
+    BuildContext context,
+    List<dynamic> cityList,
+    String? selectedValue,
+  ) {
+    final searchController = TextEditingController();
+    String query = '';
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: ThemeColors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final filtered = cityList.where((city) {
+              return city.name.toString().toLowerCase().contains(query);
+            }).toList();
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                ),
+                decoration: const BoxDecoration(
+                  color: ThemeColors.surface,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  border: Border(
+                    top: BorderSide(color: ThemeColors.cardBorder),
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Drag handle
+                      Container(
+                        margin: const EdgeInsets.only(top: 10, bottom: 14),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: ThemeColors.lineBorder,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+
+                      // Title
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Select city',
+                                style: TextStyle(
+                                  color: ThemeColors.textLight,
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () => Navigator.pop(sheetContext),
+                              borderRadius: BorderRadius.circular(20),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  color: ThemeColors.textMuted,
+                                  size: 22,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 1.4.h),
+
+                      // Search field
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (value) => setSheetState(
+                            () => query = value.trim().toLowerCase(),
+                          ),
+                          cursorColor: ThemeColors.goldenAmber,
+                          style: TextStyle(
+                            color: ThemeColors.textWhite,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search city',
+                            hintStyle: TextStyle(
+                              color: ThemeColors.textPlaceholder,
+                              fontSize: 12.sp,
+                            ),
+                            filled: true,
+                            fillColor: ThemeColors.inputBg,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 3.w,
+                              vertical: 1.4.h,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              color: ThemeColors.textMuted,
+                              size: 20,
+                            ),
+                            suffixIcon: query.isEmpty
+                                ? null
+                                : IconButton(
+                                    icon: const Icon(
+                                      Icons.cancel_rounded,
+                                      color: ThemeColors.textMuted,
+                                      size: 18,
+                                    ),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setSheetState(() => query = '');
+                                    },
+                                  ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: ThemeColors.lineBorder,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: ThemeColors.goldenAmber,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 1.2.h),
+
+                      // City list / empty state
+                      Flexible(
+                        child: filtered.isEmpty
+                            ? Padding(
+                                padding: EdgeInsets.symmetric(vertical: 4.h),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.search_off_rounded,
+                                      color: ThemeColors.textPlaceholder,
+                                      size: 36,
+                                    ),
+                                    SizedBox(height: 1.h),
+                                    Text(
+                                      'No city found',
+                                      style: TextStyle(
+                                        color: ThemeColors.textMuted,
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.separated(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.fromLTRB(
+                                  4.w,
+                                  0.5.h,
+                                  4.w,
+                                  2.h,
+                                ),
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, __) =>
+                                    SizedBox(height: 0.8.h),
+                                itemBuilder: (_, index) {
+                                  final city = filtered[index];
+                                  final isSelected = city.id == selectedValue;
+
+                                  return Material(
+                                    color: isSelected
+                                        ? ThemeColors.goldenAmberBg
+                                        : ThemeColors.cardSurface,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        Navigator.pop(sheetContext);
+                                        onChanged(city.id);
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 3.w,
+                                          vertical: 1.4.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? ThemeColors.goldenAmber
+                                                : ThemeColors.cardBorder,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                city.name,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: ThemeColors.textWhite,
+                                                  fontSize: 12.sp,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            if (isSelected)
+                                              const Icon(
+                                                Icons.check_circle_rounded,
+                                                color: ThemeColors.goldenAmber,
+                                                size: 20,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(searchController.dispose);
+  }
 }
-
-

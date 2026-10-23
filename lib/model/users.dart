@@ -22,17 +22,21 @@ class User {
 
     return User(
       success: json['success'],
-      token: json['token'] ?? json['accessToken'] ?? json['mvn_access_token'],
-      expiresInSeconds: json['expiresInSeconds'],
+      token: data['token'] ??
+          json['token'] ??
+          json['accessToken'] ??
+          json['mvn_access_token'],
+      expiresInSeconds: json['expiresInSeconds'] ?? data['expiresInSeconds'],
 
       userInfo: data['user'] != null
           ? UserInfo.fromJson(Map<String, dynamic>.from(data['user']))
           : null,
 
-      profile: data['profile'] != null
-          ? Profile.fromJson(Map<String, dynamic>.from(data['profile']))
-          : null,
-
+      profile: data['clientProfile'] != null
+          ? Profile.fromJson(Map<String, dynamic>.from(data['clientProfile']))
+          : data['profile'] != null
+              ? Profile.fromJson(Map<String, dynamic>.from(data['profile']))
+              : null,
     );
   }
 
@@ -52,7 +56,10 @@ class UserInfo {
   final String? name;
   final String? username;
   final String? email;
+  final String? phone;
   final String? role;
+  final String? address;
+  final String? city;
   final String? designation;
   final String? accessStatus;
   final String? eldoriaCareId;
@@ -65,7 +72,10 @@ class UserInfo {
     this.name,
     this.username,
     this.email,
+    this.phone,
     this.role,
+    this.address,
+    this.city,
     this.designation,
     this.accessStatus,
     this.eldoriaCareId,
@@ -86,7 +96,11 @@ class UserInfo {
 
       email: json['email']?.toString(),
 
+      phone: json['phone']?.toString(),
+
       role: json['role']?.toString(),
+      address: json['address']?.toString(),
+      city: json['city']?.toString(),
 
       designation: json['designation']?.toString(),
 
@@ -112,7 +126,10 @@ class UserInfo {
       'name': name,
       'username': username,
       'email': email,
+      'phone': phone,
       'role': role,
+      'address': address,
+      'city': city,
       'designation': designation,
       'accessStatus': accessStatus,
       'eldoriaCareId': eldoriaCareId,
@@ -158,6 +175,7 @@ class Profile {
   final UserInfo? user;
   final String? phone;
   final String? altPhone;
+  final String? address;
   final String? headline;
   final String? summary;
   final String? totalExperience;
@@ -165,6 +183,8 @@ class Profile {
   final String? currenteldoriaCare;
   final String? noticePeriod;
   final String? currentCity;
+  final String? city;
+  final String? area;
   final String? currentState;
   final String? currentCountry;
   final List<dynamic>? preferredLocations;
@@ -184,6 +204,7 @@ class Profile {
     this.user,
     this.phone,
     this.altPhone,
+    this.address,
     this.headline,
     this.summary,
     this.totalExperience,
@@ -191,6 +212,8 @@ class Profile {
     this.currenteldoriaCare,
     this.noticePeriod,
     this.currentCity,
+    this.city,
+    this.area,
     this.currentState,
     this.currentCountry,
     this.preferredLocations,
@@ -219,6 +242,7 @@ class Profile {
       phone: json['phone']?.toString(),
 
       altPhone: json['altPhone']?.toString(),
+      address: json['address']?.toString(),
 
       headline: json['headline']?.toString(),
 
@@ -232,7 +256,11 @@ class Profile {
 
       noticePeriod: json['noticePeriod']?.toString(),
 
-      currentCity: json['currentCity']?.toString(),
+      currentCity: json['currentCity']?.toString() ?? json['city']?.toString(),
+
+      city: json['city']?.toString() ?? json['currentCity']?.toString(),
+
+      area: json['area']?.toString(),
 
       currentState: json['currentState']?.toString(),
 
@@ -276,6 +304,7 @@ class Profile {
       'user': user?.toJson(),
       'phone': phone,
       'altPhone': altPhone,
+      'address': address,
       'headline': headline,
       'summary': summary,
       'totalExperience': totalExperience,
@@ -283,6 +312,8 @@ class Profile {
       'currenteldoriaCare': currenteldoriaCare,
       'noticePeriod': noticePeriod,
       'currentCity': currentCity,
+      'city': city,
+      'area': area,
       'currentState': currentState,
       'currentCountry': currentCountry,
       'preferredLocations': preferredLocations,

@@ -320,6 +320,7 @@ class _MyAppBarState extends State<MyAppBar> {
 
 PreferredSizeWidget normalAppBar(
   String title, {
+  String subTitle = '',
   bool enableBackButton = false,
   bool showBellButton = false,
   bool enableClearButton = false,
@@ -332,81 +333,38 @@ PreferredSizeWidget normalAppBar(
   return AppBar(
     backgroundColor: ThemeColors.appBar,
     elevation: 0,
-    automaticallyImplyLeading: false,
-    leading: enableBackButton
-        ? InkWell(
-            onTap: backCallBack ?? () => Get.back(),
-            overlayColor: WidgetStatePropertyAll(ThemeColors.transparentColor),
-            child: Icon(Icons.arrow_back, color: ThemeColors.oldLatterLight4),
-          )
-        : null,
-
-    leadingWidth: 40,
-
-    title: searchExpanded
-        ? TextField(
-            controller: searchController,
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              border: InputBorder.none,
-            ),
-          )
-        : Text(
-            title,
+    leading: IconButton(
+      icon: const Icon(
+        Icons.arrow_back_ios_new_rounded,
+        color: ThemeColors.textWhite,
+      ),
+      onPressed: () => Get.back(),
+    ),
+    title: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: ThemeColors.textWhite,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        if (subTitle.isNotEmpty) ...[
+          0.2.h.vs,
+          Text(
+            subTitle,
             style: TextStyle(
-              color: ThemeColors.oldLatterLight4,
-              fontSize: 5.w,
-              fontWeight: FontWeight.w700,
+              color: ThemeColors.textMuted,
+              fontSize: 10.5.sp,
+              fontWeight: FontWeight.w400,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-
-    actions: [
-      ?trailing,
-      // trailing != null ? 3.w.hs : 0.hs,
-      if (showBellButton)
-        IconButton(
-          // onPressed: () => Get.toNamed(AppRoutes.notification),
-          onPressed: (){},
-          icon: Icon(
-            Icons.notifications_none,
-            color: ThemeColors.oldLatterLight4,
-          ),
-        ),
-
-      if (enableClearButton)
-        IconButton(
-          onPressed: searchController?.clear,
-          icon: Icon(Icons.clear, color: ThemeColors.oldLatterLight4),
-        ),
-
-      ...?actions,
-    ],
+        ],
+      ],
+    ),
   );
 }
-
-// PreferredSizeWidget normalAppBar(
-//   String title, {
-//   bool? enableBackButton,
-//   bool? showBellButton,
-//   bool? showProfileButton,
-//   bool? enableClearButton,
-//   void Function()? backCallBack,
-//   bool? searchExpanded,
-//   TextEditingController? searchController,
-//   Widget? trailing,
-//   List<Widget>? actions,
-// }) {
-//   return AppBar(
-//     backgroundColor: ThemeColors.appBar,
-//     elevation: 0,
-//     title: Text(
-//       title,
-//       style: TextStyle(
-//         color: ThemeColors.oldLatterLight4,
-//         fontSize: 5.w,
-//         fontWeight: FontWeight.w700,
-//       ),
-//     ),
-//     actions: [],
-//   );
-// }

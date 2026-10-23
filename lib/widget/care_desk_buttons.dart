@@ -1,7 +1,6 @@
+import 'package:eldoriaCare/utils/helper.dart';
 import 'package:flutter/material.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
-import 'package:eldoriaCare/values/size_config.dart';
-import 'package:eldoriaCare/values/theme_colors.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class CareDeskButtons extends StatelessWidget {
   final String? phone;
@@ -17,18 +16,35 @@ class CareDeskButtons extends StatelessWidget {
     this.isAccentCall = true,
   });
 
+  static Future<void> launchCall(String? phone) async {
+    final p = (phone != null && phone.isNotEmpty) ? phone : '';
+    final digits = p.replaceAll(RegExp(r'\D'), '');
+    final url = 'tel:+91$digits';
+    Helper.openUrl(url, launchMode: LaunchMode.externalApplication);
+  }
+
+  static Future<void> launchWhatsApp(String? phone, {String? text}) async {
+    final p = (phone != null && phone.isNotEmpty) ? phone : '';
+    final digits = p.replaceAll(RegExp(r'\D'), '');
+    final msg = Uri.encodeComponent(
+      text ?? 'Hello Eldoria, I need help with home care.',
+    );
+    final url = 'https://wa.me/+91$digits?text=$msg';
+
+    Helper.openUrl(url, launchMode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final c = ClientDataController.to;
-    final effectivePhone = phone ?? c.careDeskPhone.value;
-    final effectiveWa = whatsapp ?? c.careDeskWhatsapp.value;
+    final effectivePhone = phone ?? '';
+    final effectiveWa = whatsapp ?? '';
 
     return Row(
       children: [
         // Call Button
         Expanded(
           child: InkWell(
-            onTap: () => c.makePhoneCall(effectivePhone),
+            onTap: () => launchCall(effectivePhone),
             borderRadius: BorderRadius.circular(12),
             child: Container(
               padding: EdgeInsets.symmetric(vertical: 1.3.h),
@@ -61,14 +77,18 @@ class CareDeskButtons extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.phone_rounded,
-                    color: isAccentCall ? ThemeColors.deepNavy : ThemeColors.textWhite,
+                    color: isAccentCall
+                        ? ThemeColors.deepNavy
+                        : ThemeColors.textWhite,
                     size: 4.8.w,
                   ),
                   2.w.hs,
                   Text(
                     'Call $effectivePhone',
                     style: TextStyle(
-                      color: isAccentCall ? ThemeColors.deepNavy : ThemeColors.textWhite,
+                      color: isAccentCall
+                          ? ThemeColors.deepNavy
+                          : ThemeColors.textWhite,
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w800,
                     ),
@@ -84,9 +104,11 @@ class CareDeskButtons extends StatelessWidget {
         // WhatsApp Button
         Expanded(
           child: InkWell(
-            onTap: () => c.openWhatsApp(
+            onTap: () => launchWhatsApp(
               effectiveWa,
-              text: whatsappPrefill ?? 'Hello Eldoria, I need help with home care.',
+              text:
+                  whatsappPrefill ??
+                  'Hello Eldoria, I need help with home care.',
             ),
             borderRadius: BorderRadius.circular(12),
             child: Container(

@@ -1,16 +1,12 @@
+import 'package:eldoriaCare/widget/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
-import 'package:eldoriaCare/model/client_models.dart';
-import 'package:eldoriaCare/routes/app_routes.dart';
-import 'package:eldoriaCare/screens/dashboard/controller.dart';
+import 'package:eldoriaCare/model/services_model.dart';
 import 'package:eldoriaCare/screens/home/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
 import 'package:eldoriaCare/widget/care_desk_buttons.dart';
 import 'package:eldoriaCare/widget/service_icon.dart';
-import 'package:eldoriaCare/widget/soon_bottom_sheet.dart';
 import 'package:eldoriaCare/widget/status_pill.dart';
 import 'package:eldoriaCare/widget/ticker_text.dart';
 
@@ -20,31 +16,30 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.put(HomeController());
-    final clientData = ClientDataController.to;
 
     return Scaffold(
       backgroundColor: ThemeColors.appBackground,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: () => clientData.loadStoredData(),
+          onRefresh: c.loadDashboardData,
           color: ThemeColors.goldenAmber,
           backgroundColor: ThemeColors.cardSurface,
           child: ListView(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
             children: [
               // ── Top Header Bar ──────────────────────────────────────────
-              _buildTopBar(context),
+              _buildTopBar(context, c),
 
               1.5.h.vs,
 
               // ── City Selector ───────────────────────────────────────────
-              _buildCitySelector(context),
+              _buildCitySelector(context, c),
 
               2.h.vs,
 
               // ── 24×7 Care Desk Hero Scene Card ──────────────────────────
-              _buildHeroSceneCard(context),
+              _buildHeroSceneCard(context, c),
 
               2.2.h.vs,
 
@@ -64,17 +59,17 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // "Not sure what care you need?" Banner Tile
-                    _buildNotSureBanner(context),
+                    _buildNotSureBanner(context, c),
 
                     2.5.h.vs,
 
                     // "Our services" Section with Category Grid
-                    _buildOurServicesSection(context),
+                    _buildOurServicesSection(context, c),
 
                     2.8.h.vs,
 
                     // "Upcoming visit" Section
-                    _buildUpcomingVisitSection(context),
+                    _buildUpcomingVisitSection(context, c),
 
                     3.h.vs,
                   ],
@@ -88,9 +83,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── Top Header Bar ────────────────────────────────────────────────────
-  Widget _buildTopBar(BuildContext context) {
-    final clientData = ClientDataController.to;
-
+  Widget _buildTopBar(BuildContext context, HomeController c) {
     return Row(
       children: [
         // App Logo
@@ -113,7 +106,7 @@ class HomeScreen extends StatelessWidget {
             child: Image.asset(
               'assets/icons/logo.png',
               fit: BoxFit.contain,
-              errorBuilder: (c, e, s) => const Icon(
+              errorBuilder: (ctx, err, stack) => const Icon(
                 Icons.favorite_rounded,
                 color: ThemeColors.brandNavy,
                 size: 20,
@@ -154,11 +147,9 @@ class HomeScreen extends StatelessWidget {
 
         // Notification Icon with unread badge
         Obx(() {
-          final unread = clientData.unreadNotificationsCount;
+          final unread = c.unreadNotificationsCount.value;
           return InkWell(
-            onTap: () {
-              DashboardController.to.currentNavIndex.value = 2; // Go to Alerts tab
-            },
+            onTap: c.onNotificationTap,
             borderRadius: BorderRadius.circular(12),
             child: Container(
               width: 10.5.w,
@@ -199,12 +190,14 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── City Selector ─────────────────────────────────────────────────────
-  Widget _buildCitySelector(BuildContext context) {
-    final clientData = ClientDataController.to;
-
+  Widget _buildCitySelector(BuildContext context, HomeController c) {
     return Row(
       children: [
-        const Icon(Icons.location_on_rounded, color: ThemeColors.goldenAmber, size: 18),
+        const Icon(
+          Icons.location_on_rounded,
+          color: ThemeColors.goldenAmber,
+          size: 18,
+        ),
         1.5.w.hs,
         Text(
           'Care in',
@@ -215,55 +208,19 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         2.w.hs,
-        Obx(
-          () => Container(
-            padding: EdgeInsets.symmetric(horizontal: 2.8.w, vertical: 0.4.h),
-            decoration: BoxDecoration(
-              color: ThemeColors.cardSurface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: ThemeColors.cardBorder),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: clientData.clientCity.value,
-                isDense: true,
-                dropdownColor: ThemeColors.cardSurface,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: ThemeColors.goldenAmber,
-                  size: 18,
-                ),
-                items: clientData.cities.map((city) {
-                  return DropdownMenuItem<String>(
-                    value: city.id,
-                    child: Text(
-                      city.name,
-                      style: TextStyle(
-                        color: ThemeColors.textWhite,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    clientData.clientCity.value = val;
-                    clientData.saveClientUser();
-                  }
-                },
-              ),
-            ),
-          ),
-        ),
+        Obx(() {
+          return CityDropdown(
+            height: 5.h,
+            selectedCity: c.selectedCity.value,
+            onChanged: c.onCityChanged,
+          );
+        }),
       ],
     );
   }
 
   // ── 24×7 Care Desk Hero Scene Card ────────────────────────────────────
-  Widget _buildHeroSceneCard(BuildContext context) {
-    final clientData = ClientDataController.to;
-
+  Widget _buildHeroSceneCard(BuildContext context, HomeController c) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.6.h),
@@ -292,15 +249,15 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Eyebrow: 24×7 care desk · City
-          Obx(
-            () => Container(
+          Obx(() {
+            return Container(
               padding: EdgeInsets.symmetric(horizontal: 2.6.w, vertical: 0.4.h),
               decoration: BoxDecoration(
                 color: ThemeColors.goldenAmber.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '24×7 care desk · ${clientData.cityName(clientData.clientCity.value)}',
+                '24×7 care desk · ${c.currentCityDisplayName}',
                 style: TextStyle(
                   color: ThemeColors.goldenAmberLight,
                   fontSize: 10.5.sp,
@@ -308,8 +265,8 @@ class HomeScreen extends StatelessWidget {
                   letterSpacing: 0.4,
                 ),
               ),
-            ),
-          ),
+            );
+          }),
 
           1.4.h.vs,
 
@@ -357,7 +314,13 @@ class HomeScreen extends StatelessWidget {
           2.2.h.vs,
 
           // Care Desk Call & WhatsApp Buttons
-          const CareDeskButtons(),
+          Obx(() {
+            final desk = c.location.value?.careDesk;
+            return CareDeskButtons(
+              phone: desk?.phone,
+              whatsapp: desk?.whatsapp,
+            );
+          }),
         ],
       ),
     );
@@ -378,17 +341,28 @@ class HomeScreen extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search services, e.g. dementia, wheelchair',
           hintStyle: const TextStyle(color: ThemeColors.textPlaceholder),
-          prefixIcon: const Icon(Icons.search_rounded, color: ThemeColors.textMuted, size: 22),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: ThemeColors.textMuted,
+            size: 22,
+          ),
           suffixIcon: Obx(
             () => c.searchQuery.value.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.close_rounded, color: ThemeColors.textMuted, size: 18),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: ThemeColors.textMuted,
+                      size: 18,
+                    ),
                     onPressed: c.clearSearch,
                   )
                 : const SizedBox.shrink(),
           ),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 4.w,
+            vertical: 1.6.h,
+          ),
         ),
       ),
     );
@@ -421,20 +395,21 @@ class HomeScreen extends StatelessWidget {
             child: Center(
               child: Text(
                 'No services matched your search.',
-                style: TextStyle(color: ThemeColors.textMuted, fontSize: 12.5.sp),
+                style: TextStyle(
+                  color: ThemeColors.textMuted,
+                  fontSize: 12.5.sp,
+                ),
               ),
             ),
           )
         else
-          ...hits.map((s) => _buildServiceCard(context, s)),
+          ...hits.map((s) => _buildServiceCard(context, c, s)),
 
         2.h.vs,
 
         // Can't find it banner
         InkWell(
-          onTap: () {
-            Get.toNamed('${AppRoutes.dashboard}/help');
-          },
+          onTap: c.onNotSureBannerTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: EdgeInsets.all(4.w),
@@ -448,7 +423,7 @@ class HomeScreen extends StatelessWidget {
                 Container(
                   width: 11.w,
                   height: 11.w,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: ThemeColors.goldenAmberBg,
                     shape: BoxShape.circle,
                   ),
@@ -496,11 +471,9 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── "Not sure what care you need?" Interactive Banner ─────────────────
-  Widget _buildNotSureBanner(BuildContext context) {
+  Widget _buildNotSureBanner(BuildContext context, HomeController c) {
     return InkWell(
-      onTap: () {
-        Get.toNamed('${AppRoutes.dashboard}/help');
-      },
+      onTap: c.onNotSureBannerTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 4.2.w, vertical: 2.h),
@@ -508,11 +481,11 @@ class HomeScreen extends StatelessWidget {
           color: ThemeColors.cardSurface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: ThemeColors.cardBorder),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: ThemeColors.shadowColorDark,
               blurRadius: 10,
-              offset: const Offset(0, 3),
+              offset: Offset(0, 3),
             ),
           ],
         ),
@@ -524,7 +497,9 @@ class HomeScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: ThemeColors.goldenAmberBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: ThemeColors.goldenAmber.withValues(alpha: 0.4)),
+                border: Border.all(
+                  color: ThemeColors.goldenAmber.withValues(alpha: 0.4),
+                ),
               ),
               child: const Icon(
                 Icons.help_outline_rounded,
@@ -570,23 +545,58 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── "Our services" Section with Category Grid ─────────────────────────
-  Widget _buildOurServicesSection(BuildContext context) {
-    final clientData = ClientDataController.to;
-
+  Widget _buildOurServicesSection(BuildContext context, HomeController c) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Our services',
-          style: TextStyle(
-            color: ThemeColors.textWhite,
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Our services',
+              style: TextStyle(
+                color: ThemeColors.textWhite,
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ),
         1.5.h.vs,
         Obx(() {
-          final cats = clientData.categories;
+          if (c.isLoading.value && c.categories.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: const CircularProgressIndicator(
+                  color: ThemeColors.goldenAmber,
+                ),
+              ),
+            );
+          }
+
+          if (c.categories.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(5.w),
+              decoration: BoxDecoration(
+                color: ThemeColors.cardSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: ThemeColors.cardBorder),
+              ),
+              child: Center(
+                child: Text(
+                  'No services available at the moment.',
+                  style: TextStyle(
+                    color: ThemeColors.textMuted,
+                    fontSize: 12.5.sp,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final cats = c.categories;
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -597,9 +607,9 @@ class HomeScreen extends StatelessWidget {
               mainAxisSpacing: 1.6.h,
               childAspectRatio: 1.15,
             ),
-            itemBuilder: (context, index) {
+            itemBuilder: (ctx, index) {
               final cat = cats[index];
-              return _buildCategoryTile(context, cat);
+              return _buildCategoryTile(ctx, c, cat);
             },
           );
         }),
@@ -607,18 +617,17 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryTile(BuildContext context, CategoryItem cat) {
-    final clientData = ClientDataController.to;
-    final count = clientData.getServicesForCategory(cat.id).length;
+  Widget _buildCategoryTile(
+    BuildContext context,
+    HomeController c,
+    OperationalCategoryItem cat,
+  ) {
+    final count = cat.servicesCount > 0
+        ? cat.servicesCount
+        : cat.services.length;
 
     return InkWell(
-      onTap: () {
-        if (cat.comingSoon) {
-          SoonBottomSheet.show(context);
-        } else {
-          Get.toNamed('${AppRoutes.dashboard}/category', arguments: cat.id);
-        }
-      },
+      onTap: () => c.onCategoryTap(cat, context),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: EdgeInsets.all(3.5.w),
@@ -626,11 +635,11 @@ class HomeScreen extends StatelessWidget {
           color: ThemeColors.cardSurface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: ThemeColors.cardBorder),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: ThemeColors.shadowColorDark,
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -639,11 +648,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Icon
-            ServiceIcon(
-              iconKey: cat.icon,
-              size: 5.5.w,
-              containerSize: 11.w,
-            ),
+            ServiceIcon(iconKey: cat.icon, size: 5.5.w, containerSize: 11.w),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,7 +666,10 @@ class HomeScreen extends StatelessWidget {
                 0.4.h.vs,
                 if (cat.comingSoon)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.2.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 2.w,
+                      vertical: 0.2.h,
+                    ),
                     decoration: BoxDecoration(
                       color: ThemeColors.surface2,
                       borderRadius: BorderRadius.circular(6),
@@ -692,9 +700,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── "Upcoming visit" Section ──────────────────────────────────────────
-  Widget _buildUpcomingVisitSection(BuildContext context) {
-    final clientData = ClientDataController.to;
-
+  Widget _buildUpcomingVisitSection(BuildContext context, HomeController c) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -708,7 +714,7 @@ class HomeScreen extends StatelessWidget {
         ),
         1.5.h.vs,
         Obx(() {
-          final next = clientData.nextUpcomingBooking;
+          final next = c.nextUpcomingBooking.value;
           if (next == null) {
             return Container(
               width: double.infinity,
@@ -742,20 +748,20 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          // Active upcoming booking card
-          final staff = clientData.getStaff(next.staffId);
-          final service = clientData.getService(next.service);
+          final staff = next.assignedStaff;
+          final initials = c.getStaffInitials(next);
+          final iconKey = c.getServiceIcon(next.service);
 
           return Container(
             decoration: BoxDecoration(
               color: ThemeColors.cardSurface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: ThemeColors.cardBorder),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: ThemeColors.shadowColorDark,
                   blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  offset: Offset(0, 3),
                 ),
               ],
             ),
@@ -764,9 +770,7 @@ class HomeScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  Get.toNamed('${AppRoutes.dashboard}/booking', arguments: next.id);
-                },
+                onTap: () => c.onUpcomingBookingTap(next),
                 child: Padding(
                   padding: EdgeInsets.all(4.w),
                   child: Row(
@@ -778,11 +782,14 @@ class HomeScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: ThemeColors.goldenAmberBg,
                             shape: BoxShape.circle,
-                            border: Border.all(color: ThemeColors.goldenAmber, width: 1.2),
+                            border: Border.all(
+                              color: ThemeColors.goldenAmber,
+                              width: 1.2,
+                            ),
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            staff.initials,
+                            initials,
                             style: TextStyle(
                               color: ThemeColors.goldenAmber,
                               fontSize: 12.sp,
@@ -792,7 +799,7 @@ class HomeScreen extends StatelessWidget {
                         )
                       else
                         ServiceIcon(
-                          iconKey: service?.icon ?? 'cross',
+                          iconKey: iconKey,
                           size: 5.5.w,
                           containerSize: 12.w,
                         ),
@@ -804,7 +811,7 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${next.serviceName}${staff != null ? ' · ${staff.name.split(' ').first}' : ''}',
+                              '${next.effectiveServiceName}${staff != null ? ' · ${staff.name.split(' ').first}' : ''}',
                               style: TextStyle(
                                 color: ThemeColors.textWhite,
                                 fontSize: 13.5.sp,
@@ -815,7 +822,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             0.4.h.vs,
                             Text(
-                              '${_formatDate(next.date)}, ${next.time} · for ${next.patientName}',
+                              '${c.formatDate(next.date)}, ${next.time} · for ${next.patientName}',
                               style: TextStyle(
                                 color: ThemeColors.textMuted,
                                 fontSize: 11.sp,
@@ -842,10 +849,12 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── Service Card (used in search results) ─────────────────────────────
-  Widget _buildServiceCard(BuildContext context, ServiceItem s) {
-    final clientData = ClientDataController.to;
-    final cat = clientData.getCategory(s.categoryId);
-    final soon = cat?.comingSoon ?? false;
+  Widget _buildServiceCard(
+    BuildContext context,
+    HomeController c,
+    OperationalServiceItem s,
+  ) {
+    final soon = s.comingSoon;
 
     return Container(
       margin: EdgeInsets.only(bottom: 1.5.h),
@@ -858,11 +867,7 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ServiceIcon(
-            iconKey: s.icon,
-            size: 5.5.w,
-            containerSize: 12.w,
-          ),
+          ServiceIcon(iconKey: s.icon, size: 5.5.w, containerSize: 12.w),
           3.w.hs,
           Expanded(
             child: Column(
@@ -897,17 +902,18 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        if (soon) {
-                          SoonBottomSheet.show(context, service: s);
-                        } else {
-                          Get.toNamed('${AppRoutes.dashboard}/book', arguments: s.id);
-                        }
-                      },
+                      onPressed: () => c.onServiceBookTap(s, context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: soon ? ThemeColors.surface2 : ThemeColors.goldenAmber,
-                        foregroundColor: soon ? ThemeColors.textMuted : ThemeColors.deepNavy,
-                        padding: EdgeInsets.symmetric(horizontal: 3.5.w, vertical: 0.6.h),
+                        backgroundColor: soon
+                            ? ThemeColors.surface2
+                            : ThemeColors.goldenAmber,
+                        foregroundColor: soon
+                            ? ThemeColors.textMuted
+                            : ThemeColors.deepNavy,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 3.5.w,
+                          vertical: 0.6.h,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -915,7 +921,7 @@ class HomeScreen extends StatelessWidget {
                       child: Text(
                         soon
                             ? 'Coming soon'
-                            : (cat?.kind == 'equipment' ? 'Order' : 'Book'),
+                            : (s.kind == 'equipment' ? 'Order' : 'Book'),
                         style: TextStyle(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w800,
@@ -930,24 +936,5 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(String iso) {
-    try {
-      final parts = iso.split('-');
-      if (parts.length == 3) {
-        final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final target = DateTime(d.year, d.month, d.day);
-        final diff = target.difference(today).inDays;
-
-        if (diff == 0) return 'Today';
-        if (diff == 1) return 'Tomorrow';
-        if (diff == -1) return 'Yesterday';
-        return DateFormat('d MMM').format(d);
-      }
-    } catch (_) {}
-    return iso;
   }
 }

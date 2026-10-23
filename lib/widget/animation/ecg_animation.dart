@@ -78,7 +78,7 @@ class _EcgPainter extends CustomPainter {
     // ── 1. Subtle Background Guide Line ──
     final faintPaint = Paint()
       ..color = ThemeColors.goldenAmber.withValues(alpha: 0.16)
-      ..strokeWidth = 1.2.w
+      ..strokeWidth = .8.w
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
@@ -108,7 +108,7 @@ class _EcgPainter extends CustomPainter {
     // ── 2. Glow / Drop-Shadow Pass ──
     final glowPaint = Paint()
       ..color = ThemeColors.goldenAmber.withValues(alpha: 0.55 * opacity)
-      ..strokeWidth = 4.2.w
+      ..strokeWidth = 2.w
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round

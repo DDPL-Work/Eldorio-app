@@ -16,6 +16,7 @@ class Preference extends User {
 
   static Future init() async {
     _pref = await SharedPreferences.getInstance();
+    await LocalDB.init();
   }
 
   static bool get isAvailable => _pref != null;
@@ -67,14 +68,62 @@ class Preference extends User {
 
   static Future<void> setThemeMode(ThemeMode mode) async {}
 
-  static String? get currentStaffId => _pref?.getString('eldoria_staff_id');
+  static Future<bool>? clear() {
+    _user = null;
+    return _pref?.clear();
+  }
+}
 
-  static Future<void> setCurrentStaffId(String id) async {
-    await _pref?.setString('eldoria_staff_id', id);
+class LocalDB {
+  static SharedPreferences? _pref;
+
+  static const String keyUser = 'eldoria_client_user_v2';
+  static const String keyNotifications = 'eldoria_client_notifications_v2';
+  static const String keyBookings = 'eldoria_client_bookings_v2';
+  static const String keyEnquiries = 'eldoria_client_enquiries_v2';
+  static const String keyStaffId = 'eldoria_staff_id';
+
+  static Future<void> init() async {
+    _pref ??= await SharedPreferences.getInstance();
   }
 
-  static Future<bool>? clear() {
-    _user == null;
-    return _pref?.clear();
+  static String get clientUserJson => _pref?.getString(keyUser) ?? '';
+
+  static Future<bool> setClientUserJson(String jsonStr) async {
+    await init();
+    return await _pref!.setString(keyUser, jsonStr);
+  }
+
+  // Client Notifications ('eldoria_client_notifications_v2')
+  static String get clientNotificationsJson =>
+      _pref?.getString(keyNotifications) ?? '';
+
+  static Future<bool> setClientNotificationsJson(String jsonStr) async {
+    await init();
+    return await _pref!.setString(keyNotifications, jsonStr);
+  }
+
+  // Client Bookings ('eldoria_client_bookings_v2')
+  static String get clientBookingsJson => _pref?.getString(keyBookings) ?? '';
+
+  static Future<bool> setClientBookingsJson(String jsonStr) async {
+    await init();
+    return await _pref!.setString(keyBookings, jsonStr);
+  }
+
+  // Client Enquiries ('eldoria_client_enquiries_v2')
+  static String get clientEnquiriesJson => _pref?.getString(keyEnquiries) ?? '';
+
+  static Future<bool> setClientEnquiriesJson(String jsonStr) async {
+    await init();
+    return await _pref!.setString(keyEnquiries, jsonStr);
+  }
+
+  // Current Staff ID ('eldoria_staff_id')
+  static String get currentStaffId => _pref?.getString(keyStaffId) ?? '';
+
+  static Future<bool> setCurrentStaffId(String id) async {
+    await init();
+    return await _pref!.setString(keyStaffId, id);
   }
 }

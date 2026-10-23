@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/screens/dashboard/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
@@ -12,7 +11,6 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final clientData = ClientDataController.to;
 
     return Obx(
       () => Container(
@@ -52,7 +50,7 @@ class BottomNavBar extends StatelessWidget {
                   icon: Icons.notifications_rounded,
                   label: 'Alerts',
                   index: 2,
-                  badgeCount: clientData.unreadNotificationsCount,
+                  badgeCount: 5,
                 ),
                 _buildNavItem(
                   icon: Icons.person_rounded,

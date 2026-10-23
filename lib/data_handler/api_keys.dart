@@ -7,6 +7,5 @@ class BaseUrl {
 
   static const _mainDomain = 'https://eldoria-lopd.onrender.com';
 
-  static String get baseUrl => "$_mainDomain/api/v1/eldoriaCare-panel/";
+  static String get baseUrl => "$_mainDomain/api/v1/";
 }
-

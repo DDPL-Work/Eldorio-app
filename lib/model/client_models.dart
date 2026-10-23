@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'bookings_response_model.dart';
+export 'bookings_response_model.dart';
 
 class CityItem {
   final String id;
@@ -144,226 +145,21 @@ class ServiceItem {
       };
 }
 
-class HistoryEntry {
-  final String status;
-  final int at;
-  final String by;
-  final String? note;
-
-  HistoryEntry({
-    required this.status,
-    required this.at,
-    required this.by,
-    this.note,
-  });
-
-  factory HistoryEntry.fromJson(Map<String, dynamic> json) => HistoryEntry(
-        status: json['status']?.toString() ?? '',
-        at: json['at'] is int ? json['at'] : int.tryParse(json['at']?.toString() ?? '0') ?? 0,
-        by: json['by']?.toString() ?? 'client',
-        note: json['note']?.toString(),
-      );
-
-  Map<String, dynamic> toJson() => {
-        'status': status,
-        'at': at,
-        'by': by,
-        if (note != null) 'note': note,
-      };
-}
-
-class VisitReport {
-  final String? bp;
-  final String? sugar;
-  final String? spo2;
-  final String? note;
-
-  VisitReport({this.bp, this.sugar, this.spo2, this.note});
-
-  factory VisitReport.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return VisitReport();
-    return VisitReport(
-      bp: json['bp']?.toString(),
-      sugar: json['sugar']?.toString(),
-      spo2: json['spo2']?.toString(),
-      note: json['note']?.toString(),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        if (bp != null) 'bp': bp,
-        if (sugar != null) 'sugar': sugar,
-        if (spo2 != null) 'spo2': spo2,
-        if (note != null) 'note': note,
-      };
-}
-
-class BookingItem {
-  final String id;
-  final String code;
-  final String city;
-  final String serviceName;
-  final String clientName;
-  final String clientPhone;
-  final String patientName;
-  final String patientAge;
-  final String relation;
-  final String service;
-  final String plan;
-  final String date;
-  final String time;
-  final String address;
-  final String notes;
-  final String source;
-  final String status; // requested, confirmed, assigned, on_the_way, in_progress, completed, cancelled
-  final String? cancelReason;
-  final String staffId;
-  final VisitReport? visit;
-  final int? checkInAt;
-  final int? checkOutAt;
-  final List<HistoryEntry> history;
-  final int createdAt;
-
-  BookingItem({
-    required this.id,
-    required this.code,
-    required this.city,
-    required this.serviceName,
-    required this.clientName,
-    required this.clientPhone,
-    required this.patientName,
-    required this.patientAge,
-    required this.relation,
-    required this.service,
-    required this.plan,
-    required this.date,
-    required this.time,
-    required this.address,
-    this.notes = '',
-    this.source = 'App',
-    required this.status,
-    this.cancelReason,
-    this.staffId = '',
-    this.visit,
-    this.checkInAt,
-    this.checkOutAt,
-    this.history = const [],
-    required this.createdAt,
-  });
-
-  bool get isActive =>
-      status == 'requested' ||
-      status == 'confirmed' ||
-      status == 'assigned' ||
-      status == 'on_the_way' ||
-      status == 'in_progress';
-
-  bool get canCancel =>
-      status == 'requested' || status == 'confirmed' || status == 'assigned';
-
-  factory BookingItem.fromJson(Map<String, dynamic> json) => BookingItem(
-        id: json['id']?.toString() ?? '',
-        code: json['code']?.toString() ?? '',
-        city: json['city']?.toString() ?? 'mumbai',
-        serviceName: json['serviceName']?.toString() ?? '',
-        clientName: json['clientName']?.toString() ?? '',
-        clientPhone: json['clientPhone']?.toString() ?? '',
-        patientName: json['patientName']?.toString() ?? '',
-        patientAge: json['patientAge']?.toString() ?? '',
-        relation: json['relation']?.toString() ?? 'Mother',
-        service: json['service']?.toString() ?? '',
-        plan: json['plan']?.toString() ?? 'Single visit',
-        date: json['date']?.toString() ?? '',
-        time: json['time']?.toString() ?? '',
-        address: json['address']?.toString() ?? '',
-        notes: json['notes']?.toString() ?? '',
-        source: json['source']?.toString() ?? 'App',
-        status: json['status']?.toString() ?? 'requested',
-        cancelReason: json['cancelReason']?.toString(),
-        staffId: json['staffId']?.toString() ?? '',
-        visit: json['visit'] != null ? VisitReport.fromJson(Map<String, dynamic>.from(json['visit'])) : null,
-        checkInAt: json['checkInAt'] is int ? json['checkInAt'] : int.tryParse(json['checkInAt']?.toString() ?? ''),
-        checkOutAt: json['checkOutAt'] is int ? json['checkOutAt'] : int.tryParse(json['checkOutAt']?.toString() ?? ''),
-        history: json['history'] is List
-            ? List<HistoryEntry>.from(json['history'].map((e) => HistoryEntry.fromJson(Map<String, dynamic>.from(e))))
-            : [],
-        createdAt: json['createdAt'] is int ? json['createdAt'] : int.tryParse(json['createdAt']?.toString() ?? '0') ?? 0,
-      );
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'code': code,
-        'city': city,
-        'serviceName': serviceName,
-        'clientName': clientName,
-        'clientPhone': clientPhone,
-        'patientName': patientName,
-        'patientAge': patientAge,
-        'relation': relation,
-        'service': service,
-        'plan': plan,
-        'date': date,
-        'time': time,
-        'address': address,
-        'notes': notes,
-        'source': source,
-        'status': status,
-        if (cancelReason != null) 'cancelReason': cancelReason,
-        'staffId': staffId,
-        if (visit != null) 'visit': visit!.toJson(),
-        if (checkInAt != null) 'checkInAt': checkInAt,
-        if (checkOutAt != null) 'checkOutAt': checkOutAt,
-        'history': history.map((e) => e.toJson()).toList(),
-        'createdAt': createdAt,
-      };
-
-  BookingItem copyWith({
-    String? status,
-    String? cancelReason,
-    String? staffId,
-    List<HistoryEntry>? history,
-  }) =>
-      BookingItem(
-        id: id,
-        code: code,
-        city: city,
-        serviceName: serviceName,
-        clientName: clientName,
-        clientPhone: clientPhone,
-        patientName: patientName,
-        patientAge: patientAge,
-        relation: relation,
-        service: service,
-        plan: plan,
-        date: date,
-        time: time,
-        address: address,
-        notes: notes,
-        source: source,
-        status: status ?? this.status,
-        cancelReason: cancelReason ?? this.cancelReason,
-        staffId: staffId ?? this.staffId,
-        visit: visit,
-        checkInAt: checkInAt,
-        checkOutAt: checkOutAt,
-        history: history ?? this.history,
-        createdAt: createdAt,
-      );
-}
-
 class HelpFileItem {
   final String id;
   final String name;
   final String type;
   final int size;
   final String? path;
+  final String? url;
 
   HelpFileItem({
-    required this.id,
+    this.id = '',
     required this.name,
     required this.type,
-    required this.size,
+    this.size = 0,
     this.path,
+    this.url,
   });
 
   factory HelpFileItem.fromJson(Map<String, dynamic> json) => HelpFileItem(
@@ -372,14 +168,16 @@ class HelpFileItem {
         type: json['type']?.toString() ?? '',
         size: json['size'] is int ? json['size'] : int.tryParse(json['size']?.toString() ?? '0') ?? 0,
         path: json['path']?.toString(),
+        url: json['url']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
+        if (id.isNotEmpty) 'id': id,
         'name': name,
         'type': type,
-        'size': size,
+        if (size > 0) 'size': size,
         if (path != null) 'path': path,
+        if (url != null) 'url': url,
       };
 }
 

@@ -1,4 +1,4 @@
-package com.eldoria.staff
+package com.eldoria.client
 
 import io.flutter.embedding.android.FlutterActivity
 

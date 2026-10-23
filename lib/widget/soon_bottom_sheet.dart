@@ -8,15 +8,31 @@ import 'package:eldoriaCare/widget/service_icon.dart';
 
 class SoonBottomSheet extends StatelessWidget {
   final ServiceItem? service;
+  final String? title;
+  final String? iconKey;
 
-  const SoonBottomSheet({super.key, this.service});
+  const SoonBottomSheet({
+    super.key,
+    this.service,
+    this.title,
+    this.iconKey,
+  });
 
-  static void show(BuildContext context, {ServiceItem? service}) {
+  static void show(
+    BuildContext context, {
+    ServiceItem? service,
+    String? title,
+    String? iconKey,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SoonBottomSheet(service: service),
+      builder: (context) => SoonBottomSheet(
+        service: service,
+        title: title ?? service?.name,
+        iconKey: iconKey ?? service?.icon,
+      ),
     );
   }
 
@@ -56,7 +72,7 @@ class SoonBottomSheet extends StatelessWidget {
             Row(
               children: [
                 ServiceIcon(
-                  iconKey: service?.icon ?? 'steth',
+                  iconKey: iconKey ?? service?.icon ?? 'steth',
                   size: 6.w,
                   containerSize: 12.w,
                 ),
@@ -66,7 +82,7 @@ class SoonBottomSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        service?.name ?? 'Doctor Services',
+                        title ?? service?.name ?? 'Doctor Services',
                         style: TextStyle(
                           color: ThemeColors.textWhite,
                           fontSize: 16.sp,

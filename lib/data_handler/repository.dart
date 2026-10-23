@@ -46,6 +46,67 @@ class Repository extends ApiProvider {
     }
   }
 
+  Future<dynamic> sendOtp({
+    required String phone,
+    required String purpose,
+  }) async {
+    return super.postJson(
+      'client/login/send-otp',
+      parameters: {'phone': phone, 'purpose': purpose},
+    );
+  }
+
+  Future<dynamic> verifyOtp({
+    required String phone,
+    required String otp,
+    required String purpose,
+  }) async {
+    return super.postJson(
+      'client/login/verify-otp',
+      parameters: {'phone': phone, 'otp': otp, 'purpose': purpose},
+    );
+  }
+
+  Future<dynamic> registerClient({
+    required String verificationToken,
+    required String phone,
+    required String city,
+    required String area,
+  }) async {
+    return super.postJson(
+      'client/register',
+      parameters: {
+        'verificationToken': verificationToken,
+        'phone': phone,
+        'city': city,
+        'area': area,
+      },
+    );
+  }
+
+  Future<dynamic> createBooking(Map<String, dynamic> payload) async {
+    return super.postJson('client/booking/create', parameters: payload);
+  }
+
+  Future<dynamic> getBookings() async {
+    return super.getDynamic('client/bookings');
+  }
+
+  Future<dynamic> getProfile() async {
+    return super.getDynamic('auth/profile');
+  }
+
+  Future<dynamic> getServices({
+    String city = 'pune',
+    String category = 'all',
+  }) async {
+    return super.getDynamic('client/services?city=$city&category=$category');
+  }
+
+  Future<dynamic> getSetting() async {
+    return super.getDynamic('setting');
+  }
+
   Future<dynamic> login(String email, String password) async {
     return super.postJson(
       'auth/login',

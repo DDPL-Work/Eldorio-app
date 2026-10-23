@@ -1,57 +1,34 @@
+import 'package:eldoriaCare/screens/booking_details/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:eldoriaCare/data_handler/client_data_controller.dart';
 import 'package:eldoriaCare/model/client_models.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';
 import 'package:eldoriaCare/widget/status_pill.dart';
 
-class BookingDetailScreen extends StatefulWidget {
+class BookingDetailScreen extends StatelessWidget {
   const BookingDetailScreen({super.key});
 
   @override
-  State<BookingDetailScreen> createState() => _BookingDetailScreenState();
-}
-
-class _BookingDetailScreenState extends State<BookingDetailScreen> {
-  final clientData = ClientDataController.to;
-  bool showCancelConfirm = false;
-
-  static const List<String> flowSteps = [
-    'requested',
-    'confirmed',
-    'assigned',
-    'on_the_way',
-    'in_progress',
-    'completed',
-  ];
-
-  static const Map<String, String> flowLabels = {
-    'requested': 'Request received',
-    'confirmed': 'Booking confirmed',
-    'assigned': 'Staff assigned',
-    'on_the_way': 'Staff on the way',
-    'in_progress': 'Visit in progress',
-    'completed': 'Visit completed',
-  };
-
-  @override
   Widget build(BuildContext context) {
-    final String bookingId = Get.arguments?.toString() ?? '';
+    final c = Get.put(BookingDetailController());
 
-    return Scaffold(
-      backgroundColor: ThemeColors.appBackground,
-      appBar: AppBar(
-        backgroundColor: ThemeColors.appBar,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: ThemeColors.textWhite),
-          onPressed: () => Get.back(),
-        ),
-        title: Obx(() {
-          final b = clientData.getBooking(bookingId);
-          return Column(
+    return Obx(() {
+      final b = c.booking.value;
+
+      return Scaffold(
+        backgroundColor: ThemeColors.appBackground,
+        appBar: AppBar(
+          backgroundColor: ThemeColors.appBar,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: ThemeColors.textWhite,
+            ),
+            onPressed: () => Get.back(),
+          ),
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -74,92 +51,134 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 ),
               ],
             ],
-          );
-        }),
-      ),
-      body: Obx(() {
-        final b = clientData.getBooking(bookingId);
-        if (b == null) {
-          return Center(
-            child: Text(
-              'Booking not found',
-              style: TextStyle(color: ThemeColors.textMuted, fontSize: 14.sp),
-            ),
-          );
-        }
+          ),
+        ),
+        body: _buildBody(context, c, b),
+      );
+    });
+  }
 
-        final staff = clientData.getStaff(b.staffId);
-        final service = clientData.getService(b.service);
-
-        return ListView(
-          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+  Widget _buildBody(
+    BuildContext context,
+    BookingDetailController c,
+    BookingItem? b,
+  ) {
+    if (c.isLoading.value && b == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Status row: Pill + Date, Time
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                StatusPill(status: b.status),
-                Text(
-                  '${_formatDate(b.date)}, ${b.time}',
-                  style: TextStyle(
-                    color: ThemeColors.textMuted,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-
+            const CircularProgressIndicator(color: ThemeColors.goldenAmber),
             2.h.vs,
-
-            // Staff / Caregiver Card or Assigning Notice
-            if (staff != null)
-              _buildStaffCard(context, b, staff)
-            else
-              _buildAssigningNotice(context),
-
-            2.2.h.vs,
-
-            // Status Timeline
-            _buildTimelineCard(context, b),
-
-            2.2.h.vs,
-
-            // Booking Details Card (Patient, Plan, Address, Notes, Estimate)
-            _buildDetailsCard(context, b, service),
-
-            // Visit Report Card (if completed and visit data present)
-            if (b.status == 'completed' && b.visit != null) ...[
-              2.2.h.vs,
-              _buildVisitReportCard(context, b),
-            ],
-
-            // Cancel Booking Action
-            if (b.canCancel) ...[
-              2.5.h.vs,
-              _buildCancelAction(context, b),
-            ],
-
-            3.h.vs,
+            Text(
+              'Loading booking details...',
+              style: TextStyle(
+                color: ThemeColors.textMuted,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
-        );
-      }),
+        ),
+      );
+    }
+
+    if (b == null) {
+      return Center(
+        child: Text(
+          'Booking not found',
+          style: TextStyle(color: ThemeColors.textMuted, fontSize: 14.sp),
+        ),
+      );
+    }
+
+    final staff = b.assignedStaff != null
+        ? StaffItem(
+            id: b.assignedStaff!.staffId,
+            name: b.assignedStaff!.name,
+            phone: b.assignedStaff!.phone,
+            role: b.assignedStaff!.qualification.isNotEmpty
+                ? b.assignedStaff!.qualification
+                : 'Care Specialist',
+            city: b.assignedStaff!.city,
+            area: b.assignedStaff!.area,
+            docs: b.assignedStaff!.docs,
+            onDuty: b.assignedStaff!.onDuty,
+          )
+        : c.getStaff(b.staffId);
+
+    return ListView(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      children: [
+        // Status row: Pill + Date, Time
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            StatusPill(status: b.status),
+            Text(
+              '${c.formatDate(b.date)}, ${b.time}',
+              style: TextStyle(
+                color: ThemeColors.textMuted,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+
+        2.h.vs,
+
+        // Staff / Caregiver Card or Assigning Notice
+        if (staff != null)
+          _buildStaffCard(context, c, b, staff)
+        else
+          _buildAssigningNotice(context),
+
+        2.2.h.vs,
+
+        // Status Timeline
+        _buildTimelineCard(context, c, b),
+
+        2.2.h.vs,
+
+        // Booking Details Card (Patient, Plan, Address, Notes, Estimate)
+        _buildDetailsCard(context, c, b),
+
+        // Visit Report Card (if completed and visit data present)
+        if (b.status == 'completed' && b.visit != null) ...[
+          2.2.h.vs,
+          _buildVisitReportCard(context, c, b),
+        ],
+
+        // Cancel Booking Action
+        if (b.canCancel) ...[
+          2.5.h.vs,
+          _buildCancelAction(context, c, b),
+        ],
+
+        3.h.vs,
+      ],
     );
   }
 
   // ── Caregiver Card ────────────────────────────────────────────────────
-  Widget _buildStaffCard(BuildContext context, BookingItem b, StaffItem staff) {
+  Widget _buildStaffCard(
+    BuildContext context,
+    BookingDetailController c,
+    BookingItem b,
+    StaffItem staff,
+  ) {
     return Container(
       padding: EdgeInsets.all(4.5.w),
       decoration: BoxDecoration(
         color: ThemeColors.cardSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: ThemeColors.cardBorder),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: ThemeColors.shadowColorDark,
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -212,7 +231,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       0.4.h.vs,
                       Row(
                         children: [
-                          const Icon(Icons.shield_rounded, color: ThemeColors.successGreen, size: 14),
+                          const Icon(
+                            Icons.shield_rounded,
+                            color: ThemeColors.successGreen,
+                            size: 14,
+                          ),
                           1.w.hs,
                           Text(
                             'ID & background verified',
@@ -238,23 +261,26 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => clientData.makePhoneCall(staff.phone),
+                  onPressed: () => c.makePhoneCall(staff.phone),
                   icon: const Icon(Icons.phone_rounded, size: 16),
                   label: const Text('Call'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: ThemeColors.textWhite,
                     side: const BorderSide(color: ThemeColors.cardBorder),
                     padding: EdgeInsets.symmetric(vertical: 1.2.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
               3.w.hs,
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => clientData.openWhatsApp(
+                  onPressed: () => c.openWhatsApp(
                     staff.phone,
-                    text: 'Hello ${staff.name}, this is ${clientData.clientName.value} regarding booking ${b.code}.',
+                    text:
+                        'Hello ${staff.name}, regarding booking ${b.code}.',
                   ),
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
                   label: const Text('WhatsApp'),
@@ -262,7 +288,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     backgroundColor: ThemeColors.whatsAppGreen,
                     foregroundColor: ThemeColors.textWhite,
                     padding: EdgeInsets.symmetric(vertical: 1.2.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -335,7 +363,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   // ── Status Timeline Card ──────────────────────────────────────────────
-  Widget _buildTimelineCard(BuildContext context, BookingItem b) {
+  Widget _buildTimelineCard(
+    BuildContext context,
+    BookingDetailController c,
+    BookingItem b,
+  ) {
     final isCancelled = b.status == 'cancelled';
 
     return Container(
@@ -374,23 +406,26 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               ),
             )
           else ...[
-            ...flowSteps.asMap().entries.map((entry) {
+            ...BookingDetailController.flowSteps.asMap().entries.map((entry) {
               final index = entry.key;
               final stepKey = entry.value;
-              final currentIndex = flowSteps.indexOf(b.status);
+              final currentIndex =
+                  BookingDetailController.flowSteps.indexOf(b.status);
 
-              final isDone = index < currentIndex || (index == currentIndex && b.status == 'completed');
+              final isDone = index < currentIndex ||
+                  (index == currentIndex && b.status == 'completed');
               final isCurrent = index == currentIndex && !isDone;
 
-              final historyEntry = b.history.firstWhereOrNull((h) => h.status == stepKey);
+              final historyEntry =
+                  b.history.firstWhereOrNull((h) => h.status == stepKey);
 
               return _buildTimelineStep(
-                label: flowLabels[stepKey] ?? stepKey,
+                label: BookingDetailController.flowLabels[stepKey] ?? stepKey,
                 isDone: isDone,
                 isCurrent: isCurrent,
-                isLast: index == flowSteps.length - 1,
+                isLast: index == BookingDetailController.flowSteps.length - 1,
                 subtitle: historyEntry != null && index <= currentIndex
-                    ? '${_formatTimeAgo(historyEntry.at)}${historyEntry.by != 'client' ? ' · by ${historyEntry.by}' : ''}'
+                    ? '${c.formatTimeAgo(historyEntry.at)}${historyEntry.by != 'client' ? ' · by ${historyEntry.by}' : ''}'
                     : null,
               );
             }),
@@ -433,7 +468,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 color: nodeColor,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isCurrent ? ThemeColors.goldenAmber : ThemeColors.cardBorder,
+                  color: isCurrent
+                      ? ThemeColors.goldenAmber
+                      : ThemeColors.cardBorder,
                   width: 1.5,
                 ),
               ),
@@ -472,7 +509,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    color: isDone || isCurrent ? ThemeColors.textWhite : ThemeColors.textMuted,
+                    color: isDone || isCurrent
+                        ? ThemeColors.textWhite
+                        : ThemeColors.textMuted,
                     fontSize: 12.5.sp,
                     fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
                   ),
@@ -497,7 +536,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   // ── Booking Details Card ──────────────────────────────────────────────
-  Widget _buildDetailsCard(BuildContext context, BookingItem b, ServiceItem? service) {
+  Widget _buildDetailsCard(
+    BuildContext context,
+    BookingDetailController c,
+    BookingItem b,
+  ) {
     return Container(
       padding: EdgeInsets.all(4.5.w),
       decoration: BoxDecoration(
@@ -508,17 +551,126 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow('Patient', '${b.patientName}${b.patientAge.isNotEmpty ? ', ${b.patientAge}' : ''} (${b.relation})'),
+          _buildDetailRow(
+            'Patient',
+            '${b.patientName}${b.patientAge.isNotEmpty ? ', ${b.patientAge}' : ''} (${b.relation})',
+          ),
           1.2.h.vs,
           _buildDetailRow('Plan', b.plan),
           1.2.h.vs,
-          _buildDetailRow('Address', '${b.address}, ${clientData.cityName(b.city)}'),
+          _buildDetailRow('Address', '${b.address}, ${c.cityName(b.city)}'),
           if (b.notes.isNotEmpty) ...[
             1.2.h.vs,
             _buildDetailRow('Notes', b.notes),
           ],
+          if (b.fromEnquiry != null && b.fromEnquiry!.isNotEmpty) ...[
+            1.2.h.vs,
+            _buildDetailRow('Reference', b.fromEnquiry!),
+          ],
           1.2.h.vs,
-          _buildDetailRow('Estimate', service?.priceLabel ?? 'Contact for price', isAccent: true),
+          _buildDetailRow(
+            'Estimate',
+            b.formattedPrice.isNotEmpty
+                ? b.formattedPrice
+                : 'Contact for price',
+            isAccent: true,
+          ),
+          if (b.files.isNotEmpty) ...[
+            1.8.h.vs,
+            Text(
+              'Attached Documents (${b.files.length})',
+              style: TextStyle(
+                color: ThemeColors.textWhite,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            0.8.h.vs,
+            Wrap(
+              spacing: 2.w,
+              runSpacing: 1.h,
+              children: b.files.map((f) {
+                return Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 2.5.w,
+                    vertical: 0.6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ThemeColors.surface2,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: ThemeColors.cardBorder),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        f.type.contains('pdf')
+                            ? Icons.picture_as_pdf_rounded
+                            : Icons.image_rounded,
+                        size: 13.sp,
+                        color: ThemeColors.goldenAmber,
+                      ),
+                      1.5.w.hs,
+                      Text(
+                        f.name,
+                        style: TextStyle(
+                          color: ThemeColors.textLight,
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+          if (b.tasks.isNotEmpty) ...[
+            1.8.h.vs,
+            Text(
+              'Care Tasks (${b.tasks.length})',
+              style: TextStyle(
+                color: ThemeColors.textWhite,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            0.8.h.vs,
+            ...b.tasks.map(
+              (task) => Padding(
+                padding: EdgeInsets.symmetric(vertical: 0.4.h),
+                child: Row(
+                  children: [
+                    Icon(
+                      task.done
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      size: 13.sp,
+                      color: task.done
+                          ? ThemeColors.successGreen
+                          : ThemeColors.goldenAmber,
+                    ),
+                    2.w.hs,
+                    Expanded(
+                      child: Text(
+                        task.label,
+                        style: TextStyle(
+                          color: task.done
+                              ? ThemeColors.textMuted
+                              : ThemeColors.textWhite,
+                          fontSize: 11.5.sp,
+                          fontWeight:
+                              task.done ? FontWeight.w500 : FontWeight.w600,
+                          decoration:
+                              task.done ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -554,7 +706,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   // ── Visit Report Card ─────────────────────────────────────────────────
-  Widget _buildVisitReportCard(BuildContext context, BookingItem b) {
+  Widget _buildVisitReportCard(
+    BuildContext context,
+    BookingDetailController c,
+    BookingItem b,
+  ) {
     final v = b.visit!;
 
     return Container(
@@ -593,11 +749,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             1.h.vs,
           ],
           if (b.checkInAt != null) ...[
-            _buildDetailRow('Check-in', _formatTimestamp(b.checkInAt!)),
+            _buildDetailRow('Check-in', c.formatTimestamp(b.checkInAt!)),
             1.h.vs,
           ],
           if (b.checkOutAt != null) ...[
-            _buildDetailRow('Check-out', _formatTimestamp(b.checkOutAt!)),
+            _buildDetailRow('Check-out', c.formatTimestamp(b.checkOutAt!)),
           ],
         ],
       ),
@@ -605,112 +761,100 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   // ── Cancel Action ─────────────────────────────────────────────────────
-  Widget _buildCancelAction(BuildContext context, BookingItem b) {
-    if (showCancelConfirm) {
-      return Container(
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: ThemeColors.errorRedBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ThemeColors.errorRedColor.withValues(alpha: 0.4)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              'Cancel this booking?',
-              style: TextStyle(
-                color: ThemeColors.textWhite,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
+  Widget _buildCancelAction(
+    BuildContext context,
+    BookingDetailController c,
+    BookingItem b,
+  ) {
+    return Obx(() {
+      if (c.showCancelConfirm.value) {
+        return Container(
+          padding: EdgeInsets.all(4.w),
+          decoration: BoxDecoration(
+            color: ThemeColors.errorRedBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: ThemeColors.errorRedColor.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Cancel this booking?',
+                style: TextStyle(
+                  color: ThemeColors.textWhite,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            1.5.h.vs,
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      setState(() => showCancelConfirm = false);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ThemeColors.textWhite,
-                      side: const BorderSide(color: ThemeColors.cardBorder),
-                      padding: EdgeInsets.symmetric(vertical: 1.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              1.5.h.vs,
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        c.showCancelConfirm.value = false;
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ThemeColors.textWhite,
+                        side: const BorderSide(color: ThemeColors.cardBorder),
+                        padding: EdgeInsets.symmetric(vertical: 1.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Keep it'),
                     ),
-                    child: const Text('Keep it'),
                   ),
-                ),
-                3.w.hs,
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      clientData.cancelBooking(b.id);
-                      setState(() => showCancelConfirm = false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ThemeColors.errorRed,
-                      foregroundColor: ThemeColors.textWhite,
-                      padding: EdgeInsets.symmetric(vertical: 1.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  3.w.hs,
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        c.cancelBooking(b.id);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ThemeColors.errorRed,
+                        foregroundColor: ThemeColors.textWhite,
+                        padding: EdgeInsets.symmetric(vertical: 1.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Yes, cancel'),
                     ),
-                    child: const Text('Yes, cancel'),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
+                ],
+              ),
+            ],
+          ),
+        );
+      }
 
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: () {
-          setState(() => showCancelConfirm = true);
-        },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: ThemeColors.errorRedColor,
-          side: BorderSide(color: ThemeColors.errorRedColor.withValues(alpha: 0.4)),
-          padding: EdgeInsets.symmetric(vertical: 1.4.h),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        child: Text(
-          'Cancel booking',
-          style: TextStyle(
-            fontSize: 12.5.sp,
-            fontWeight: FontWeight.w700,
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: () {
+            c.showCancelConfirm.value = true;
+          },
+          style: OutlinedButton.styleFrom(
+            foregroundColor: ThemeColors.errorRedColor,
+            side: BorderSide(
+              color: ThemeColors.errorRedColor.withValues(alpha: 0.4),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 1.4.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            'Cancel booking',
+            style: TextStyle(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  String _formatDate(String iso) {
-    try {
-      final parts = iso.split('-');
-      if (parts.length == 3) {
-        final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        return DateFormat('EEE, d MMM').format(d);
-      }
-    } catch (_) {}
-    return iso;
-  }
-
-  String _formatTimeAgo(int timestamp) {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final diffMin = ((now - timestamp) / 60000).round();
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return '${diffMin}m ago';
-    final diffHours = (diffMin / 60).round();
-    if (diffHours < 24) return '${diffHours}h ago';
-    final diffDays = (diffHours / 24).round();
-    return '${diffDays}d ago';
-  }
-
-  String _formatTimestamp(int timestamp) {
-    final d = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    return DateFormat('d MMM, h:mm a').format(d);
+      );
+    });
   }
 }

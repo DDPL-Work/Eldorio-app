@@ -83,11 +83,11 @@ class _SplashScreenState extends State<SplashScreen>
 
     _titleSlide = Tween<Offset>(begin: const Offset(0, 0.35), end: Offset.zero)
         .animate(
-          CurvedAnimation(
-            parent: _mainAnimController,
-            curve: const Interval(0.29, 0.58, curve: Curves.easeOutCubic),
-          ),
-        );
+      CurvedAnimation(
+        parent: _mainAnimController,
+        curve: const Interval(0.29, 0.58, curve: Curves.easeOutCubic),
+      ),
+    );
 
     // 4. ECG pulse line entrance (400ms -> 1200ms)
     _ecgOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -174,7 +174,9 @@ class _SplashScreenState extends State<SplashScreen>
     _hasNavigated = true;
 
     if (Preference.isLogin) {
+      // if(Preference.user.userInfo.permissions.){
       Get.offAllNamed(AppRoutes.home);
+      // }
     } else {
       Get.offAllNamed(AppRoutes.login);
     }
