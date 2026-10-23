@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/screens/auth/track_joining_status/controller.dart';
-import 'package:eldoriaCare/values/size_config.dart';
-import 'package:eldoriaCare/values/theme_colors.dart';
+import 'package:eldoriaCare/utils/helper.dart';
 import 'package:eldoriaCare/widget/my_button.dart';
 
 class TrackApplicationScreen extends StatelessWidget {
@@ -357,18 +356,31 @@ class TrackApplicationScreen extends StatelessWidget {
         18.vs,
 
         // Action Buttons
-        if (app.isApproved)
+        if (app.isApproved) ...[
           MyButton(
             label: 'Sign in to the Staff app',
             color: ThemeColors.goldenAmber,
             onPressed: c.signInApproved,
-          )
-        else if (app.isChanges || app.isPending)
+          ),
+        ] else if (Helper.isTester) ...[
+          MyButton(
+            label: 'Sign in to the Staff app',
+            color: ThemeColors.goldenAmber,
+            onPressed: c.signInApproved,
+          ),
+          12.vs,
+          MyButton(
+            label: app.isChanges ? 'Edit & resubmit' : 'Edit my application',
+            variant: ButtonVariant.secondary,
+            onPressed: c.editApplication,
+          ),
+        ] else if (app.isChanges || app.isPending) ...[
           MyButton(
             label: app.isChanges ? 'Edit & resubmit' : 'Edit my application',
             color: app.isChanges ? ThemeColors.goldenAmber : null,
             onPressed: c.editApplication,
           ),
+        ],
 
         18.vs,
 

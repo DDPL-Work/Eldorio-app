@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
 import 'package:eldoriaCare/model/alert_model.dart';
 import 'package:eldoriaCare/model/booking_model.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
 class DashboardController extends GetxController {

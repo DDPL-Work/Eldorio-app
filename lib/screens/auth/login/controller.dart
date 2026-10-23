@@ -5,14 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
 class LoginController extends GetxController {
   static LoginController get to => Get.find();
-
-  final staffService = StaffService.instance;
 
   final staffList = <StaffModel>[].obs;
   final activeApplicant = Rxn<StaffModel>();
@@ -28,9 +26,8 @@ class LoginController extends GetxController {
   void onInit() {
     super.onInit();
     if (Helper.isTester) {
-      phoneCtrl.text = '9876543210';
+      phoneCtrl.text = '8126552280';
     }
-    loadData();
   }
 
   @override
@@ -65,31 +62,48 @@ class LoginController extends GetxController {
   }
 
   Future<void> verifyOtp(String phone) async {
+    final number = phone.trim().replaceAll(RegExp(r'\D'), '');
     final otp = otpCtrl.text.trim();
-    if (otp.length < 6) {
-      Toasty.failed('Enter a valid OTP');
+    if (number.length != 10) {
+      Toasty.failed('Enter a valid 10-digit mobile number');
       return;
     }
+    if (otp.length < 6) {
+      Toasty.failed('Enter a valid 6-digit OTP');
+      return;
+    }
+    isLoading.value = true;
     try {
-      final response = await Repository.instance.verifyOtp(phone, otp, 'login');
-      if (response['success']) {
+      final response = await Repository.instance.verifyOtp(
+        number,
+        otp,
+        'login',
+      );
+      final isSuccess =
+          response != null &&
+          (response['success'] == true || response['status'] == 'success');
+
+      if (isSuccess && response['data'] != null) {
+        final staff = StaffModel.fromJson(
+          response['data'] as Map<String, dynamic>,
+        );
+
+        if (staff.isApproved) {
+          Toasty.success('Welcome back, ${staff.name}!');
+          Get.offAllNamed(AppRoutes.home);
+        } else {
+          Toasty.info('Your application is under review');
+          Get.offAllNamed(
+            AppRoutes.trackJoiningStatus,
+            arguments: {'trackId': staff.id, 'application': staff},
+          );
+        }
       } else {
-        Toasty.failed('Staff record not found');
+        Toasty.failed(response?['message'] ?? 'Staff record not found');
       }
     } catch (e) {
       Logger.e(tag: 'Error occurred while verifying OTP', value: e);
       Toasty.failed('somethingWentWrong'.t);
-    }
-  }
-
-  Future<void> loadData() async {
-    isLoading.value = true;
-    try {
-      final list = await staffService.getApprovedStaffList();
-      staffList.assignAll(list);
-      final applicant = await staffService.getCurrentApplicant();
-      activeApplicant.value = applicant;
-    } catch (_) {
     } finally {
       isLoading.value = false;
     }

@@ -71,6 +71,22 @@ class Repository extends ApiProvider {
     );
   }
 
+  Future<dynamic> checkApplicationStatus(String staffID) async {
+    return super.getDynamic('staff/application/$staffID/status');
+  }
+
+  Future<dynamic> getProfile() async {
+    return super.getDynamic('auth/profile');
+  }
+
+  Future<dynamic> getBookings() async {
+    return super.getDynamic('staff/bookings');
+  }
+
+  Future<dynamic> getBookingById(String bookingId) async {
+    return super.getDynamic('staff/booking/$bookingId');
+  }
+
   Future<dynamic> updateProfile(Map<String, dynamic> data) async {
     return super.patchDynamic('profile', parameters: data);
   }

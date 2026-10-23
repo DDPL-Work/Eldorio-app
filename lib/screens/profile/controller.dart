@@ -1,6 +1,6 @@
 import 'package:eldoriaCare/utils/helper.dart';
 import 'package:get/get.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
 class ProfileController extends GetxController {

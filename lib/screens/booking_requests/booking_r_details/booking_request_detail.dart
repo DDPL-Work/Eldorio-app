@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eldoriaCare/model/booking_model.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/screens/dashboard/controller.dart';
 import 'package:eldoriaCare/values/size_config.dart';
 import 'package:eldoriaCare/values/theme_colors.dart';

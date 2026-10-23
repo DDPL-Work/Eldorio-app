@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
 import 'package:eldoriaCare/screens/auth/join_staff/controller.dart';
 import 'package:eldoriaCare/widget/my_button.dart';
-import 'package:eldoriaCare/utils/toasty.dart';
 
 class JoinStaffScreen extends StatelessWidget {
   JoinStaffScreen({super.key});
@@ -24,7 +23,6 @@ class JoinStaffScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildProgressBar(),
-
 
             Expanded(
               child: SingleChildScrollView(

@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
@@ -18,7 +18,6 @@ class JoiningController extends GetxController {
   final picker = ImagePicker();
 
   // ── Step State ─────────────────────────────────────────────
-  // Step 0: Phone Verification, Step 1: Your details, Step 2: Work profile, Step 3: Documents, Step 4: Review
   final currentStep = 0.obs;
   final isSubmitting = false.obs;
   final isSendingOtp = false.obs;

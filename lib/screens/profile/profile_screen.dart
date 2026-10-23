@@ -1,4 +1,4 @@
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eldoriaCare/screens/profile/controller.dart';

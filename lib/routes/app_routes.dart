@@ -18,7 +18,7 @@ class AppRoutes {
   static final pages = [
     GetPage(
       name: login,
-      page: () => const LoginScreen(),
+      page: () => LoginScreen(),
       binding: BindingsBuilder(() => Get.lazyPut(() => LoginController())),
       transition: Transition.fadeIn,
     ),

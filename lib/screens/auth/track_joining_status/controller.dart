@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eldoriaCare/data_handler/staff_service.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/routes/app_routes.dart';
 import 'package:eldoriaCare/utils/toasty.dart';
 
@@ -38,15 +38,20 @@ class JoiningStatusController extends GetxController {
     isLoading.value = true;
     try {
       final args = Get.arguments;
+      if (args is Map && args['application'] is StaffModel) {
+        application.value = args['application'] as StaffModel;
+      }
       String? trackId;
       if (args is Map) {
         trackId = args['trackId']?.toString();
       }
 
-      if (trackId != null && trackId.isNotEmpty) {
-        application.value = await staffService.getApplicationById(trackId);
-      } else {
-        application.value = await staffService.getCurrentApplicant();
+      if (application.value == null) {
+        if (trackId != null && trackId.isNotEmpty) {
+          application.value = await staffService.getApplicationById(trackId);
+        } else {
+          application.value = await staffService.getCurrentApplicant();
+        }
       }
     } catch (_) {
       // Ignored

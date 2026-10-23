@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:eldoriaCare/model/alert_model.dart';
 import 'package:eldoriaCare/model/booking_model.dart';
-import 'package:eldoriaCare/model/staff_model.dart';
+import 'package:eldoriaCare/model/staff_profile.dart';
 import 'package:eldoriaCare/model/users.dart';
 import 'package:eldoriaCare/utils/preference.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -388,6 +388,23 @@ class StaffService {
   Future<void> loginAsStaff(StaffModel staff) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kCurrentStaffId, staff.id);
+    await prefs.setString(_kCurrentApplicantId, staff.id);
+
+    final allStaff = await getApprovedStaffList();
+    final index = allStaff.indexWhere(
+      (s) =>
+          s.id == staff.id ||
+          (s.staffId.isNotEmpty && s.staffId == staff.staffId),
+    );
+    if (index >= 0) {
+      allStaff[index] = staff;
+    } else {
+      allStaff.insert(0, staff);
+    }
+    await prefs.setString(
+      _kStaffList,
+      jsonEncode(allStaff.map((e) => e.toJson()).toList()),
+    );
 
     // Populate user profile in existing Preference system
     final userInfo = UserInfo(
@@ -396,20 +413,27 @@ class StaffService {
       username: staff.name,
       email: staff.email ?? '${staff.phone}@eldoriacare.staff',
       role: 'STAFF',
-      designation: staff.role,
+      designation: staff.role.isNotEmpty
+          ? staff.role
+          : (staff.qualification ?? 'Staff'),
       accessStatus: staff.approval,
-      eldoriaCareId: staff.id,
+      eldoriaCareId: staff.staffId.isNotEmpty ? staff.staffId : staff.id,
       eldoriaCareName: 'Eldoria Care at Home',
     );
 
     final user = User(
       success: true,
-      token: 'staff_jwt_${staff.id}_${DateTime.now().millisecondsSinceEpoch}',
+      token: (staff.token != null && staff.token!.isNotEmpty)
+          ? staff.token
+          : 'staff_jwt_${staff.id}_${DateTime.now().millisecondsSinceEpoch}',
       userInfo: userInfo,
     );
 
     Preference.setUser(user);
     await Preference.setLogin(true);
+    await Preference.setCurrentStaffId(
+      staff.staffId.isNotEmpty ? staff.staffId : staff.id,
+    );
   }
 
   // ── Default Seed Bookings ───────────────────────────────────────────
@@ -704,8 +728,9 @@ class StaffService {
     final staffId = prefs.getString(_kCurrentStaffId) ?? 's1';
     final allStaff = await getApprovedStaffList();
     return allStaff.firstWhere(
-      (s) => s.id == staffId,
-      orElse: () => _defaultStaff().first,
+      (s) => s.id == staffId || (s.staffId.isNotEmpty && s.staffId == staffId),
+      orElse: () =>
+          allStaff.isNotEmpty ? allStaff.first : _defaultStaff().first,
     );
   }
 }
